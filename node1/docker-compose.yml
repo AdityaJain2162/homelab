@@ -93,7 +93,9 @@ services:
     pid: host
     command:
       - '--path.rootfs=/host'
-      - '--collector.smartmon'   # SMART attrs/temps — needs smartmontools on host (ansible: hardware_monitor role)
+      # NOTE: --collector.smartmon was removed upstream in node-exporter v1.9.
+      # SMART metrics come via smartd + hw-alert.sh for now; revisit with
+      # Netdata/Beszel or a textfile collector when Node 2 monitoring lands.
     volumes:
       - '/:/host:ro,rslave'
 
