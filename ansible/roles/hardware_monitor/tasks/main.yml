@@ -13,6 +13,26 @@
     state: present
     update_cache: true
 
+# hwmon kernel modules — board-specific Super I/O / CPU temp drivers.
+# node-exporter's hwmon collector only sees sensors these expose.
+# NB: other boards may need different modules (e.g. nct6775) — check `sensors`.
+- name: Persist hwmon kernel modules
+  ansible.builtin.lineinfile:
+    path: /etc/modules
+    line: "{{ item }}"
+    state: present
+  loop:
+    - it87      # ITE IT87xx Super I/O — fans + motherboard temps (Node 1 ASUS board)
+    - k10temp   # AMD CPU temp (Athlon II)
+
+- name: Load hwmon kernel modules now
+  ansible.builtin.command: "modprobe {{ item }}"
+  loop:
+    - it87
+    - k10temp
+  changed_when: false
+  failed_when: false   # module may not bind on boards without the chip
+
 - name: Deploy smartd.conf
   ansible.builtin.copy:
     src: smartd.conf

@@ -584,8 +584,90 @@
     },
     {
       "type": "row",
-      "title": "Containers",
+      "title": "Thermals",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 41 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU & board temps",
+      "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 42 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "axisPlacement": "auto"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 85 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "expr": "node_hwmon_temp_celsius",
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
+          "legendFormat": "{{chip}} {{sensor}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Fan speeds",
+      "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 42 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rpm",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "axisPlacement": "auto"
+          },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "expr": "node_hwmon_fan_rpm",
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
+          "legendFormat": "{{chip}} {{sensor}}"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Containers",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 49 },
       "collapsed": false,
       "panels": []
     },
@@ -593,7 +675,7 @@
       "type": "timeseries",
       "title": "CPU per container",
       "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 42 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 50 },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -627,7 +709,7 @@
       "type": "timeseries",
       "title": "Memory per container",
       "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 42 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 50 },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
@@ -661,7 +743,7 @@
     {
       "type": "row",
       "title": "Services",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 50 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 58 },
       "collapsed": false,
       "panels": []
     },
@@ -669,7 +751,7 @@
       "type": "stat",
       "title": "Service probe status",
       "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 51 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 59 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -709,7 +791,7 @@
       "type": "timeseries",
       "title": "Probe latency",
       "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 51 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 59 },
       "fieldConfig": {
         "defaults": {
           "unit": "s",
