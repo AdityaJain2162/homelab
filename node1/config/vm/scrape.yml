@@ -1,26 +1,14 @@
 # VictoriaMetrics scrape config — node1/docker-compose.yml mounts this at /etc/vm.
 # Targets use host.docker.internal (extra_hosts → host-gateway) since node-exporter
-# and Netdata run with network_mode: host.
+# runs with network_mode: host.
 
 global:
   scrape_interval: 15s
 
 scrape_configs:
-  # node-exporter :9100 — CPU/RAM/disk/network/load/fs metrics
+  # node-exporter :9100 — CPU/RAM/disk/network/load/fs + hwmon temps/fans
   - job_name: node1
     static_configs:
       - targets: ['host.docker.internal:9100']
-        labels:
-          instance: node1
-
-  # Netdata Prometheus endpoint :19999 — adds temps/fans/SMART/disk-IO/per-app
-  # metrics node-exporter doesn't expose. allmetrics is heavy → scrape slower.
-  - job_name: netdata-node1
-    scrape_interval: 60s
-    metrics_path: /api/v1/allmetrics
-    params:
-      format: [prometheus]
-    static_configs:
-      - targets: ['host.docker.internal:19999']
         labels:
           instance: node1

@@ -126,32 +126,6 @@ services:
     volumes:
       - '/:/host:ro,rslave'
 
-  netdata:
-    image: netdata/netdata:v2.12.3
-    container_name: netdata
-    restart: unless-stopped
-    network_mode: host    # dashboard on :19999 directly on the host
-    pid: host             # see host processes for per-app metrics
-    cap_add:
-      - SYS_PTRACE
-      - SYS_ADMIN
-    security_opt:
-      - apparmor:unconfined
-    volumes:
-      - /opt/docker/appdata/netdata/config:/etc/netdata
-      - /opt/docker/appdata/netdata/lib:/var/lib/netdata
-      - /opt/docker/appdata/netdata/cache:/var/cache/netdata
-      - /run/dbus:/run/dbus:ro
-      - /etc/passwd:/host/etc/passwd:ro
-      - /etc/group:/host/etc/group:ro
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/os-release:/host/etc/os-release:ro
-      - /sys:/host/sys:ro
-      - /proc:/host/proc:ro
-      - '/:/host/root:ro,rslave'
-    environment:
-      - TZ=${TZ}
-
   victoria-metrics:
     image: victoriametrics/victoria-metrics:v1.155.0
     container_name: victoria-metrics
