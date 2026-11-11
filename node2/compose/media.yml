@@ -14,7 +14,7 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     environment:
-      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER:?set VPN_SERVICE_PROVIDER in .env}
       - VPN_TYPE=${VPN_TYPE:-wireguard}
       - SERVER_COUNTRIES=${SERVER_COUNTRIES:-}
       - TZ=${TZ}

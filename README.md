@@ -91,5 +91,6 @@ Network topology (WAN, PPPoE, VLANs, firewall rules): [`docs/network.md`](docs/n
   - ext4 on the whole SSD, no LVM, OpenSSH enabled.
   - Docker Engine + Compose plugin from Docker's official apt repo (`resolute` is supported).
   - 26.04 gotchas: `sudo` is sudo-rs, cgroup v2 only (v1 removed), kernel 7.0, OpenZFS 2.4.1 flagged experimental upstream — keep real backups.
-- Per-node `.env` (`PUID=1000`, `PGID=1000`, `TZ=Asia/Kolkata`).
+- Per-node `.env` (`PUID=1000`, `PGID=1000`, `TZ=Asia/Kolkata`) — **the single source of truth for IPs, hostnames and secrets**. Nothing sensitive is committed; `.env.example` files document every variable.
+- Required secrets use `${VAR:?}` in compose so a missing value fails loudly instead of silently defaulting.
 - State lives under `/opt/docker/appdata/<service>/` on both nodes.

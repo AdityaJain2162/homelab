@@ -1,5 +1,6 @@
-// Grafana Alloy — Node 2. Scrapes metrics → VictoriaMetrics (same compose network).
-// TODO: add loki.source.* blocks for Docker/journal log shipping to Loki.
+# Grafana Alloy — Node 2. Scrapes metrics → VictoriaMetrics (same compose network).
+# Runtime vars come from the container environment (see compose/monitoring.yml + .env).
+# TODO: add loki.source.* blocks for Docker/journal log shipping to Loki.
 
 prometheus.remote_write "vm" {
   endpoint {
@@ -14,9 +15,9 @@ prometheus.scrape "node2" {
   scrape_interval = "30s"
 }
 
-// Node 1's node-exporter — replace with Node 1's LAN IP
+// Node 1's node-exporter — address comes from NODE1_EXPORTER_ADDR in .env
 prometheus.scrape "node1" {
-  targets = [{ __address__ = "192.168.1.10:9100", job = "node1", instance = "node1" }] // TODO: node1 IP
+  targets = [{ __address__ = env("NODE1_EXPORTER_ADDR"), job = "node1", instance = "node1" }]
   forward_to = [prometheus.remote_write.vm.receiver]
   scrape_interval = "30s"
 }

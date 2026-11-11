@@ -92,7 +92,10 @@ docker compose up -d
 docker compose ps
 
 # ---------- 8. next steps ----------
-cat <<'EOF'
+node1_ip="$(grep -E '^NODE1_IP=' "$STACK_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2- | awk '{print $1}' | tr -d "\"'" || true)"
+node1_ip="${node1_ip:-<set NODE1_IP in .env>}"
+
+cat <<'EOF' | sed "s|<node1-ip>|${node1_ip}|g"
 
 ============================================================
  Bootstrap complete. Next steps:

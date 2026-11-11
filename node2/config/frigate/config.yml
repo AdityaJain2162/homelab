@@ -1,0 +1,35 @@
+# Frigate config — DRAFT skeleton.
+# Copy to /opt/docker/appdata/frigate/config/config.yml on Node 2, then fill in
+# camera entries. Replace <NODE1_IP>, <MQTT_USER>, <MQTT_PASSWORD> with the values
+# from node1/.env before starting (Frigate config does not expand env vars).
+
+mqtt:
+  enabled: true
+  host: <NODE1_IP>          # Mosquitto on Node 1
+  port: 1883
+  user: <MQTT_USER>
+  password: <MQTT_PASSWORD>
+  topic_prefix: frigate
+  client_id: frigate
+
+detectors:
+  ov:
+    type: openvino
+    device: GPU              # UHD 630 iGPU
+
+ffmpeg:
+  hwaccel_args: preset-vaapi  # gen10 iGPU → VAAPI per Frigate docs
+
+record:
+  enabled: true
+  retain:
+    days: 3                  # continuous retention — tune to the 1TB disk
+  alerts:
+    retain:
+      days: 14
+  detections:
+    retain:
+      days: 14
+
+# TODO at deploy: cameras: section (substream for detect, main for record),
+# plus go2rtc restream/camera wiring per https://docs.frigate.video

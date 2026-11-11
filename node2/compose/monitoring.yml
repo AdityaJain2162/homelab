@@ -20,7 +20,7 @@ services:
     container_name: grafana
     restart: unless-stopped
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in .env}
       - TZ=${TZ}
     volumes:
       - /opt/docker/appdata/monitoring/grafana:/var/lib/grafana
@@ -49,6 +49,9 @@ services:
       - /etc/alloy/config.alloy
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    environment:
+      - NODE1_EXPORTER_ADDR=${NODE1_EXPORTER_ADDR:?set NODE1_EXPORTER_ADDR in .env}
+      - TZ=${TZ}
     volumes:
       - ../config/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro    # for docker log shipping (TODO config)

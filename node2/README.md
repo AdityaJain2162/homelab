@@ -73,6 +73,15 @@ sudo mount -a
 
 Then `sudo apt install sanoid` for scheduled snapshots of `photos` + `shares`. Ubuntu scrubs monthly by default — consider `zpool scrub` alerts via SMART/smartd.
 
+## Configuration variables (`.env`)
+
+`.env.example` documents every variable. Highlights:
+
+- **Network:** `NODE1_IP`, `NODE2_IP`, `NODE1_NAME`, `NODE2_NAME`, `NODE1_EXPORTER_ADDR` (Alloy's scrape target for Node 1 — keep in sync with `NODE1_IP`)
+- **Secrets:** `DB_PASSWORD`, `GRAFANA_ADMIN_PASSWORD`, VPN provider credentials — all gitignored, required ones use `${VAR:?}` fail-fast syntax
+- **Service config:** `IMMICH_VERSION`, `UPLOAD_LOCATION=/srv/photos`, `DB_DATA_LOCATION` (SSD path)
+- **MQTT:** auth lives in `node1/.env` (`MQTT_USER`/`MQTT_PASSWORD`) — Node 2 services reference those same values; see `config/frigate/config.yml`
+
 ## Services → compose files
 
 All drafts in [`compose/`](compose/). Run from `node2/` with `docker compose --env-file .env -f compose/<file>.yml up -d`.
@@ -87,7 +96,7 @@ All drafts in [`compose/`](compose/). Run from `node2/` with `docker compose --e
 
 ## Key configuration notes
 
-**Frigate** — detection on camera substreams (~5 fps), recording on main stream; `preset-vaapi` decode (UHD 630 is gen10 → VAAPI per Frigate docs); `devices: /dev/dri`; recordings on the dedicated ext4 disk; MQTT → `mqtt://<node1-ip>:1883` with credentials; DB (SQLite) stays on SSD. Retention ~3 days continuous / 14 days alerts to start. 1 TB ≈ 5–8 days for 2 cameras @1080p — **camera count is still an open question** and may justify 2 TB.
+**Frigate** — detection on camera substreams (~5 fps), recording on main stream; `preset-vaapi` decode (UHD 630 is gen10 → VAAPI per Frigate docs); `devices: /dev/dri`; recordings on the dedicated ext4 disk; MQTT → `mqtt://$NODE1_IP:1883` (value lives in `node1/.env`) with credentials; DB (SQLite) stays on SSD. Retention ~3 days continuous / 14 days alerts to start. 1 TB ≈ 5–8 days for 2 cameras @1080p — **camera count is still an open question** and may justify 2 TB.
 
 **Immich** — `UPLOAD_LOCATION=/srv/photos`, DB data on SSD, `IMMICH_VERSION=v3.3.6` (v3.4.0 is days old — let it bake). ML container uses the `-openvino` image suffix for iGPU inference. Nightly `pg_dump` to `/srv/photos/db-backups`.
 

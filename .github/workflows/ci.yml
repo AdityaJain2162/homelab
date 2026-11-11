@@ -16,7 +16,7 @@ jobs:
         # .env files are gitignored; compose needs them to exist for env_file/interpolation
         run: |
           touch node1/.env node2/.env
-          printf 'PUID=1000\nPGID=1000\nTZ=Asia/Kolkata\nIMMICH_VERSION=v0.0.0\nUPLOAD_LOCATION=/tmp\nDB_DATA_LOCATION=/tmp\nDB_PASSWORD=x\nDB_USERNAME=x\nDB_DATABASE_NAME=x\nVPN_SERVICE_PROVIDER=x\n' > node2/.env
+          printf 'PUID=1000\nPGID=1000\nTZ=Asia/Kolkata\nNODE1_IP=10.0.0.10\nNODE2_IP=10.0.0.11\nNODE1_EXPORTER_ADDR=10.0.0.10:9100\nIMMICH_VERSION=v0.0.0\nUPLOAD_LOCATION=/tmp\nDB_DATA_LOCATION=/tmp\nDB_PASSWORD=x\nDB_USERNAME=x\nDB_DATABASE_NAME=x\nGRAFANA_ADMIN_PASSWORD=x\nVPN_SERVICE_PROVIDER=x\n' > node2/.env
 
       - name: docker compose config
         run: |

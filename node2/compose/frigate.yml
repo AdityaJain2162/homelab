@@ -12,7 +12,7 @@ services:
     devices:
       - /dev/dri:/dev/dri    # Intel iGPU — VAAPI decode + OpenVINO detector
     volumes:
-      - /opt/docker/appdata/frigate/config:/config
+      - /opt/docker/appdata/frigate/config:/config   # put config.yml here — see node2/config/frigate/config.yml
       - /media/frigate/recordings:/media/frigate/recordings   # dedicated ext4 disk — NEVER NFS/ZFS
       - /etc/localtime:/etc/localtime:ro
     ports:

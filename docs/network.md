@@ -118,7 +118,7 @@ The controller runs on **Node 2 (VLAN 99)** and manages ER605 + SG2428P + EAPs.
 
 - Controller **down** → switching, routing, DHCP, Wi-Fi and VLANs all keep working on last-known config. You only lose the web UI, stats and the ability to change config.
 - This is why the controller is acceptable on the "heavy" node: it is a management plane, not a data plane.
-- Adoption requirement: controller must be reachable on VLAN 99; set its inform URL to `http://<node2-vlan99-ip>:8088` so devices find it after adoption.
+- Adoption requirement: controller must be reachable on VLAN 99; set its inform URL to `http://$NODE2_IP:8088` (value from `node2/.env`) so devices find it after adoption.
 - Controller software needs AVX (MongoDB 8) → Node 2 only, never Node 1.
 
 ## DNS resilience

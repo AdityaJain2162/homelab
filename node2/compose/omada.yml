@@ -21,4 +21,4 @@ services:
     volumes:
       - /opt/docker/appdata/omada/data:/opt/tplink/EAPController/data
       - /opt/docker/appdata/omada/logs:/opt/tplink/EAPController/logs
-    # Web UI: https://<node2>:8043  |  HTTP: :8088  |  portal: :8843
+    # Web UI: https://$NODE2_IP:8043  |  HTTP: :8088  |  portal: :8843

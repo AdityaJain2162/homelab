@@ -83,6 +83,16 @@ docker compose up -d
 docker compose ps
 ```
 
+## Configuration variables (`.env`)
+
+| Variable | Purpose |
+|---|---|
+| `PUID` / `PGID` / `TZ` | Container user/group + timezone (1000 / Asia/Kolkata) |
+| `NODE1_NAME` / `NODE1_IP` | Hostname (Tailscale) + LAN IP on the Management VLAN |
+| `LAN_SUBNET` | Management VLAN subnet — documentation/planning |
+| `TS_AUTHKEY` | Optional Tailscale headless auth key |
+| `MQTT_USER` / `MQTT_PASSWORD` | Mosquitto credentials — source of truth reused by Node 2 services |
+
 ## Post-setup checklist
 
 1. **AdGuard** → http://node1:3000 — run the wizard, set web port to **3000** (NPM owns :80), choose upstream DNS. Then on the router set DHCP DNS to Node 1's IP; **keep the router's own upstream DNS as fallback** so DNS survives AdGuard/NAS reboots.
@@ -91,7 +101,7 @@ docker compose ps
 4. **Tailscale** → authenticate once:
    `docker compose exec tailscale tailscale up` (prints a login URL), or set `TS_AUTHKEY` in `.env` for headless auth.
 5. **Uptime Kuma** → http://node1:3001 — create admin, add monitors (router, Node 2 services once they exist), configure a push channel (Telegram/ntfy/email).
-6. **Mosquitto** — credentials created above are used by Zigbee2MQTT (here) and Frigate (Node 2 → `mqtt://<node1-ip>:1883`).
+6. **Mosquitto** — credentials created above are used by Zigbee2MQTT (here) and Frigate (Node 2 → `mqtt://$NODE1_IP:1883`, value from `.env`).
 
 ## Enabling Zigbee2MQTT (when the dongle arrives)
 
