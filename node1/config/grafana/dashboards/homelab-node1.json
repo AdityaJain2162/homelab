@@ -258,10 +258,10 @@
       },
       "targets": [
         {
-          "expr": "avg(node_hwmon_temp_celsius or node_thermal_zone_temp)",
+          "expr": "avg(node_hwmon_temp_celsius{chip=\"device:15_atk0110:00\"})",
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
-          "legendFormat": "avg all sensors"
+          "legendFormat": "avg atk0110"
         }
       ]
     },
