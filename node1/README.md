@@ -72,6 +72,8 @@ Give Node 1 a **static IP or DHCP reservation** on the router — everything poi
 | Zigbee2MQTT | *(commented out)* | 8099 | Enable when the USB dongle arrives |
 | Asterisk PBX | *(planned — commented out)* | 5060 + RTP | SIP intercom + trunk — see [`docs/voice.md`](../docs/voice.md) |
 
+**Currently commented out in `docker-compose.yml`:** `npm` (crash-loop, root cause TBD — data preserved), `mosquitto` (needs `config/mosquitto/mosquitto.conf` copied into appdata first), `vault` (needs uid-100 dir fix, then `operator init` — see `docs/vault.md`).
+
 Host-level (installed by the Ansible `hardware_monitor` role, not compose): **smartmontools/smartd** watches all drives — short self-test Sun 02:00, long monthly — and alerts via `scripts/hw-alert.sh` to Telegram/Discord (targets in `/etc/homelab-alert.env`). **node-exporter** exposes host metrics for Grafana history/alerting on Node 2 (its `smartmon` collector was removed upstream in v1.9 — drive health is covered by smartd + `hw-alert.sh` instead).
 
 ## Deploy

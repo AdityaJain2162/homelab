@@ -15,20 +15,22 @@ services:
       - /opt/docker/appdata/adguardhome/work:/opt/adguardhome/work
       - /opt/docker/appdata/adguardhome/conf:/opt/adguardhome/conf
 
-  npm:
-    image: jc21/nginx-proxy-manager:2.16.0
-    container_name: npm
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "81:81"        # admin UI
-    volumes:
-      - /opt/docker/appdata/npm:/data
-    environment:
-      - TZ=${TZ}
-      - PUID=${PUID}
-      - PGID=${PGID}
+  # npm — DISABLED: crash-looping on Node 1, root cause TBD. Re-enable after
+  # `docker compose logs npm` is diagnosed. Data persists in /opt/docker/appdata/npm.
+  # npm:
+  #   image: jc21/nginx-proxy-manager:2.16.0
+  #   container_name: npm
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #     - "81:81"        # admin UI
+  #   volumes:
+  #     - /opt/docker/appdata/npm:/data
+  #   environment:
+  #     - TZ=${TZ}
+  #     - PUID=${PUID}
+  #     - PGID=${PGID}
 
   homeassistant:
     image: ghcr.io/home-assistant/home-assistant:2026.11.1
@@ -41,19 +43,21 @@ services:
     environment:
       - TZ=${TZ}
 
-  mosquitto:
-    image: eclipse-mosquitto:2.1.2-alpine
-    container_name: mosquitto
-    restart: unless-stopped
-    ports:
-      - "1883:1883"    # MQTT — Zigbee2MQTT here, Frigate on Node 2
-      - "9001:9001"    # MQTT over WebSockets
-    volumes:
-      - /opt/docker/appdata/mosquitto/config:/mosquitto/config
-      - /opt/docker/appdata/mosquitto/data:/mosquitto/data
-      - /opt/docker/appdata/mosquitto/log:/mosquitto/log
-    environment:
-      - TZ=${TZ}
+  # mosquitto — DISABLED: needs config/mosquitto/mosquitto.conf copied into
+  # /opt/docker/appdata/mosquitto/config/ + passwordfile (see README). Data persists.
+  # mosquitto:
+  #   image: eclipse-mosquitto:2.1.2-alpine
+  #   container_name: mosquitto
+  #   restart: unless-stopped
+  #   ports:
+  #     - "1883:1883"    # MQTT — Zigbee2MQTT here, Frigate on Node 2
+  #     - "9001:9001"    # MQTT over WebSockets
+  #   volumes:
+  #     - /opt/docker/appdata/mosquitto/config:/mosquitto/config
+  #     - /opt/docker/appdata/mosquitto/data:/mosquitto/data
+  #     - /opt/docker/appdata/mosquitto/log:/mosquitto/log
+  #   environment:
+  #     - TZ=${TZ}
 
   uptime-kuma:
     image: louislam/uptime-kuma:2.5.9    # NB: :latest still points at v1 — keep pinned
@@ -85,25 +89,27 @@ services:
       - net_admin
       - net_raw
 
-  vault:
-    image: hashicorp/vault:2.2.1
-    container_name: vault
-    restart: unless-stopped
-    ports:
-      - "8200:8200"    # API + UI (TLS). TODO: restrict to VLAN 99 / tailnet at ER605.
-    cap_add:
-      - IPC_LOCK      # mlock — required for prod mode
-    volumes:
-      - /opt/docker/appdata/vault/data:/vault/data
-      - ./config/vault:/vault/config:ro
-      - /opt/docker/appdata/vault/tls:/vault/tls:ro
-    command: server -config=/vault/config/vault.hcl
-    environment:
-      - TZ=${TZ}
-      # lets `docker compose exec vault vault ...` verify the self-signed cert
-      - VAULT_ADDR=https://127.0.0.1:8200
-      - VAULT_CACERT=/vault/tls/vault.crt
-      - VAULT_TLS_SERVER_NAME=vault.homelab
+  # vault — DISABLED (parked): needs /opt/docker/appdata/vault/{data,tls}
+  # chowned to uid 100, then `vault operator init`. See docs/vault.md.
+  # vault:
+  #   image: hashicorp/vault:2.2.1
+  #   container_name: vault
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8200:8200"    # API + UI (TLS). TODO: restrict to VLAN 99 / tailnet at ER605.
+  #   cap_add:
+  #     - IPC_LOCK      # mlock — required for prod mode
+  #   volumes:
+  #     - /opt/docker/appdata/vault/data:/vault/data
+  #     - ./config/vault:/vault/config:ro
+  #     - /opt/docker/appdata/vault/tls:/vault/tls:ro
+  #   command: server -config=/vault/config/vault.hcl
+  #   environment:
+  #     - TZ=${TZ}
+  #     # lets `docker compose exec vault vault ...` verify the self-signed cert
+  #     - VAULT_ADDR=https://127.0.0.1:8200
+  #     - VAULT_CACERT=/vault/tls/vault.crt
+  #     - VAULT_TLS_SERVER_NAME=vault.homelab
 
   node-exporter:
     image: quay.io/prometheus/node-exporter:v1.12.1
