@@ -104,8 +104,11 @@ filters:
     id: 2
 whitelist: []
 filtering:
-  blocking_ipv4: ""
-  blocking_ipv6: ""
+  blocking_ipv4: "0.0.0.0"
+  blocking_ipv6: "::"
+  # IPv6-ready: bind_hosts [] listens on both stacks and aaaa_disabled is false,
+  # so AAAA answers flow now and keep working when the LAN gets IPv6 later.
+  # Harmless on an IPv4-only network — v4-only clients just ignore AAAA.
   blocked_response_ttl: 10
   filtering_enabled: true
   rewrites:
