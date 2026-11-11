@@ -15,22 +15,20 @@ services:
       - /opt/docker/appdata/adguardhome/work:/opt/adguardhome/work
       - /opt/docker/appdata/adguardhome/conf:/opt/adguardhome/conf
 
-  # npm — DISABLED: crash-looping on Node 1, root cause TBD. Re-enable after
-  # `docker compose logs npm` is diagnosed. Data persists in /opt/docker/appdata/npm.
-  # npm:
-  #   image: jc21/nginx-proxy-manager:2.16.0
-  #   container_name: npm
-  #   restart: unless-stopped
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #     - "81:81"        # admin UI
-  #   volumes:
-  #     - /opt/docker/appdata/npm:/data
-  #   environment:
-  #     - TZ=${TZ}
-  #     - PUID=${PUID}
-  #     - PGID=${PGID}
+  npm:
+    image: jc21/nginx-proxy-manager:2.16.0
+    container_name: npm
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "81:81"        # admin UI
+    volumes:
+      - /opt/docker/appdata/npm:/data
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
 
   homeassistant:
     image: ghcr.io/home-assistant/home-assistant:2026.11.1
