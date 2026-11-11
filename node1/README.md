@@ -69,8 +69,10 @@ Give Node 1 a **static IP or DHCP reservation** on the router — everything poi
 | Tailscale | `tailscale/tailscale:v1.104.4` | — | Mesh VPN / remote access |
 | HashiCorp Vault | `hashicorp/vault:2.2.1` | 8200 | Local secrets management — see [`docs/vault.md`](../docs/vault.md) |
 | Node Exporter | `quay.io/prometheus/node-exporter:v1.12.1` | 9100 | Metrics → VictoriaMetrics on Node 2 |
-| VictoriaMetrics | `victoriametrics/victoria-metrics:v1.155.0` | 8428 | TSDB — **3-month retention**, scrapes node-exporter |
-| Grafana | `grafana/grafana:13.2.5` | 3002 | Dashboards over VictoriaMetrics (VM datasource auto-provisioned) |
+| VictoriaMetrics | `victoriametrics/victoria-metrics:v1.155.0` | 8428 | TSDB — **3-month retention**, scrapes node-exporter + cAdvisor + blackbox |
+| cAdvisor | `ghcr.io/google/cadvisor:v0.60.6` | 8080 | Per-container CPU/mem/network metrics |
+| Blackbox Exporter | `prom/blackbox-exporter:v0.29.1` | 9115 | HTTP probes of service UIs → `probe_success` |
+| Grafana | `grafana/grafana:13.2.5` | 3002 | Dashboards + provisioned alert rules over VictoriaMetrics |
 | Zigbee2MQTT | *(commented out)* | 8099 | Enable when the USB dongle arrives |
 | Asterisk PBX | *(planned — commented out)* | 5060 + RTP | SIP intercom + trunk — see [`docs/voice.md`](../docs/voice.md) |
 
@@ -91,6 +93,8 @@ docker compose up -d --force-recreate node-exporter
 ```
 
 Metrics appear in VictoriaMetrics as `node_smart_*{disk="/dev/sda"}` — graph temps/wear in Grafana.
+
+**Alerting:** Grafana-managed rules are provisioned from `config/grafana/provisioning/alerting/node1.yml` — scrape-target down, service probe failures, CPU/RAM/disk/load thresholds, SSD temp >60 °C. They appear under **Alerting → Alert rules** (folder `Homelab`; create that folder once in the UI if provisioning logs "folder not found"). No notification channel is wired yet — add a contact point (Telegram/Discord/email) under Alerting → Contact points when ready; provisioned contact points can go in the same directory.
 
 ## Deploy
 

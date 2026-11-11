@@ -1,0 +1,13 @@
+# blackbox_exporter module config — node1/docker-compose.yml mounts this dir.
+# Used by the `blackbox` scrape job in config/vm/scrape.yml to HTTP-probe
+# service UIs and expose probe_success / probe_duration_seconds.
+modules:
+  http_ok:
+    prober: http
+    timeout: 10s
+    http:
+      # follow redirects, then require one of these final codes —
+      # Grafana/AdGuard/HA all 302 to their login/onboarding pages
+      valid_status_codes: [200, 204, 301, 302, 401, 403]
+      follow_redirects: true
+      preferred_ip_protocol: ip4

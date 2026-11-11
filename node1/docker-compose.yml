@@ -143,6 +143,35 @@ services:
       - '-promscrape.config=/etc/vm/scrape.yml'
       - '-storageDataPath=/storage'
 
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.60.6
+    container_name: cadvisor
+    restart: unless-stopped
+    ports:
+      - "8080:8080"    # per-container metrics UI — VM scrapes via bridge network
+    privileged: true   # cAdvisor needs host cgroup/device access for full metrics
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+
+  blackbox:
+    image: prom/blackbox-exporter:v0.29.1
+    container_name: blackbox
+    restart: unless-stopped
+    ports:
+      - "9115:9115"    # prober API — VM scrapes via bridge network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # probe host-network services (HA :8123)
+    volumes:
+      - ./config/blackbox:/etc/blackbox_exporter:ro
+    command:
+      - '--config.file=/etc/blackbox_exporter/blackbox.yml'
+
   grafana:
     image: grafana/grafana:13.2.5
     container_name: grafana

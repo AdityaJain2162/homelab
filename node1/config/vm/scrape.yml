@@ -12,3 +12,30 @@ scrape_configs:
       - targets: ['host.docker.internal:9100']
         labels:
           instance: node1
+
+  # cadvisor :8080 — per-container CPU/memory/network/block IO
+  - job_name: cadvisor
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          instance: node1
+
+  # blackbox :9115 — HTTP probes of service UIs (probe_success, probe_duration_seconds)
+  - job_name: blackbox
+    metrics_path: /probe
+    params:
+      module: [http_ok]
+    static_configs:
+      - targets:
+          - adguardhome:3000            # AdGuard admin UI
+          - grafana:3000                # Grafana (host publishes :3002)
+          - victoriametrics:8428        # VM UI/API
+          - host.docker.internal:8123   # Home Assistant (host network)
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115
