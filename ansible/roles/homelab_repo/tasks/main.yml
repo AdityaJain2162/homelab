@@ -1,0 +1,32 @@
+---
+# Clones the repo to repo_dir and bootstraps .env files.
+# .env is gitignored — force: no means an existing .env is NEVER overwritten.
+
+- name: Clone homelab repo
+  ansible.builtin.git:
+    repo: "{{ repo_url }}"
+    dest: "{{ repo_dir }}"
+    version: main
+    update: yes
+
+- name: Ensure repo is owned by the deploy user
+  ansible.builtin.file:
+    path: "{{ repo_dir }}"
+    recurse: yes
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+
+- name: Create .env from .env.example where missing
+  ansible.builtin.copy:
+    src: "{{ repo_dir }}/{{ item }}/.env.example"
+    dest: "{{ repo_dir }}/{{ item }}/.env"
+    remote_src: yes
+    force: no
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+  loop:
+    - node1
+    - node2
+  loop_control:
+    label: "{{ item }}/.env"

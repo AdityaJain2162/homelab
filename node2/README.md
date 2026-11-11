@@ -88,6 +88,7 @@ All drafts in [`compose/`](compose/). Run from `node2/` with `docker compose --e
 
 | File | Services | Notes |
 |---|---|---|
+| `compose/dns.yml` | AdGuard Home (secondary DNS) | Same image as Node 1 — import Node 1's `AdGuardHome.yaml` for identical upstream/rewrites/blocklists |
 | `compose/frigate.yml` | Frigate 0.18.2 | go2rtc is **bundled** — no separate container. OpenVINO on iGPU, VAAPI decode |
 | `compose/immich.yml` | Immich v3.3.6 + ML + PG + Valkey | ML image `-openvino` tag uses UHD 630 |
 | `compose/media.yml` | Gluetun + qBittorrent + Sonarr/Radarr/Prowlarr/Bazarr | qbit shares Gluetun's netns → all torrent traffic via VPN |
@@ -105,6 +106,8 @@ All drafts in [`compose/`](compose/). Run from `node2/` with `docker compose --e
 **Omada** — host networking is mandatory or APs/switches can't be adopted (L2 broadcasts don't cross bridge networks). MongoDB 8 inside needs AVX — fine here, impossible on Node 1. Static IP on the router; back up the controller's auto-backup file to `/srv/shares`.
 
 **Monitoring** — VictoriaMetrics scrapes: node-exporter (both nodes), cAdvisor, itself. Alloy ships Docker/system logs → Loki (retention capped at 14 days in `config/loki/loki.yaml`). Uptime Kuma on Node 1 is the alert path — it keeps working when Node 2 doesn't.
+
+**Secondary DNS** — `compose/dns.yml` runs a second AdGuard Home so clients fail over if Node 1's instance is down. AdGuard has no replication: configure Node 1, export `AdGuardHome.yaml`, import on Node 2. Admin UI is on `ADGUARD_WEB_PORT` (default 3001 — 3000 is Grafana here).
 
 ## Backup
 

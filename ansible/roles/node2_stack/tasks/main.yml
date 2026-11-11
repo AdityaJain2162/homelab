@@ -1,0 +1,30 @@
+---
+# Node 2 appdata dirs only. The compose stacks under node2/compose/ are
+# drafts — they need .env filled in, ZFS datasets mounted and the Frigate
+# disk attached before `up -d` makes sense. Deploy them manually with
+# scripts/update.sh (or pull-deploy.sh once configured).
+
+- name: Create Node 2 appdata dirs
+  ansible.builtin.file:
+    path: "{{ appdata_root }}/{{ item }}"
+    state: directory
+    owner: "1000"
+    group: "1000"
+    mode: "0755"
+  loop:
+    - adguardhome/work
+    - adguardhome/conf
+    - monitoring/victoriametrics
+    - monitoring/grafana
+    - monitoring/loki
+    - monitoring/alloy
+    - immich/postgres
+    - frigate/config
+    - gluetun
+    - qbittorrent
+    - sonarr
+    - radarr
+    - prowlarr
+    - bazarr
+    - omada/data
+    - omada/logs

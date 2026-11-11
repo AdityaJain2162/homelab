@@ -1,0 +1,27 @@
+---
+# Provisioning entry point. Run from ansible/:
+#   ansible-playbook site.yml --limit node1
+# See ansible/README.md for prerequisites and first-run notes.
+
+- name: Common setup — Docker host + repo + deploy timer
+  hosts: homelab
+  become: true
+  roles:
+    - docker_host
+    - homelab_repo
+    - node_deploy
+  vars:
+    # inventory_hostname is node1/node2 — matches scripts/pull-deploy.sh's argument
+    deploy_stack: "{{ inventory_hostname }}"
+
+- name: Node 1 — appdata dirs, Mosquitto creds, bring stack up
+  hosts: node1
+  become: true
+  roles:
+    - node1_stack
+
+- name: Node 2 — appdata dirs only (compose stacks are drafts until built)
+  hosts: node2
+  become: true
+  roles:
+    - node2_stack

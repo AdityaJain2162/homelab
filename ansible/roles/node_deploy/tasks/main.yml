@@ -1,0 +1,23 @@
+---
+# Installs the pull-deploy systemd timer: every 6h the node does
+# git pull --ff-only + docker compose up for its stack(s).
+# deploy_stack comes from site.yml (inventory_hostname → node1/node2).
+
+- name: Install deploy service unit
+  ansible.builtin.template:
+    src: homelab-deploy.service.j2
+    dest: /etc/systemd/system/homelab-deploy.service
+    mode: "0644"
+
+- name: Install deploy timer unit
+  ansible.builtin.template:
+    src: homelab-deploy.timer.j2
+    dest: /etc/systemd/system/homelab-deploy.timer
+    mode: "0644"
+
+- name: Enable and start deploy timer
+  ansible.builtin.systemd:
+    name: homelab-deploy.timer
+    enabled: true
+    state: started
+    daemon_reload: true

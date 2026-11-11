@@ -1,0 +1,10 @@
+[Unit]
+Description=Homelab pull-deploy ({{ deploy_stack }})
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User={{ deploy_user }}
+WorkingDirectory={{ repo_dir }}
+ExecStart={{ repo_dir }}/scripts/pull-deploy.sh {{ deploy_stack }}

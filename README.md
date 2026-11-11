@@ -43,9 +43,11 @@ flowchart TB
         PIPE["Gluetun → qBittorrent<br/>Sonarr · Radarr · Prowlarr · Bazarr"]
         OMADA["Omada Controller"]
         OBS["VictoriaMetrics · Grafana<br/>Loki · Alloy · cAdvisor"]
+        AGH2["AdGuard Home — secondary DNS :53"]
     end
 
-    LAN(["LAN clients — all VLANs"]) ==>|"DNS"| AGH
+    LAN(["LAN clients — all VLANs"]) ==>|"DNS (primary)"| AGH
+    LAN -.->|"DNS (secondary)"| AGH2
     KU ==>|"health probes"| NODE2
     OBS ==>|"scrapes :9100"| NE
     FR ==>|"detections/events"| MQ
@@ -62,7 +64,7 @@ Network topology (WAN, PPPoE, VLANs, firewall rules): [`docs/network.md`](docs/n
 
 | Service | Node | Notes |
 |---|---|---|
-| AdGuard Home (DNS) | 1 | Router keeps upstream DNS as fallback |
+| AdGuard Home (DNS) | 1 (primary) + 2 (secondary) | Same config on both; router keeps upstream DNS as fallback |
 | Nginx Proxy Manager | 1 | Reverse proxy + TLS for Node 1 apps |
 | Tailscale | 1 (+ Node 2 later) | Remote access / mesh VPN |
 | Home Assistant | 1 | 24/7 automation |
@@ -82,7 +84,8 @@ Network topology (WAN, PPPoE, VLANs, firewall rules): [`docs/network.md`](docs/n
 
 - [`node1/`](node1/) — the live node: compose stack, env template, bootstrap script, setup guide
 - [`node2/`](node2/) — planned node: buy list specs, drive layout, ZFS commands, compose drafts, [`purchasing.md`](node2/purchasing.md)
-- [`scripts/`](scripts/) — repo-level helpers ([`update.sh`](scripts/update.sh))
+- [`ansible/`](ansible/) — provisioning playbooks (Docker, repo, deploy timer, appdata) — run from your workstation over SSH
+- [`scripts/`](scripts/) — repo-level helpers ([`update.sh`](scripts/update.sh), [`pull-deploy.sh`](scripts/pull-deploy.sh) — the latter runs on-node via a systemd timer)
 - [`docs/`](docs/) — architecture + reference docs: [network design](docs/network.md), [earlier master plan](docs/master-plan-v2-reference.md)
 
 ## Conventions
@@ -92,5 +95,6 @@ Network topology (WAN, PPPoE, VLANs, firewall rules): [`docs/network.md`](docs/n
   - Docker Engine + Compose plugin from Docker's official apt repo (`resolute` is supported).
   - 26.04 gotchas: `sudo` is sudo-rs, cgroup v2 only (v1 removed), kernel 7.0, OpenZFS 2.4.1 flagged experimental upstream — keep real backups.
 - Per-node `.env` (`PUID=1000`, `PGID=1000`, `TZ=Asia/Kolkata`) — **the single source of truth for IPs, hostnames and secrets**. Nothing sensitive is committed; `.env.example` files document every variable.
+- **Two deploy paths:** Ansible (`ansible/`) provisions nodes over SSH; a systemd timer on each node runs `scripts/pull-deploy.sh` every 6h to `git pull --ff-only` + `compose up -d`. GitHub CI only validates — it can't reach LAN nodes.
 - Required secrets use `${VAR:?}` in compose so a missing value fails loudly instead of silently defaulting.
 - State lives under `/opt/docker/appdata/<service>/` on both nodes.

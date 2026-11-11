@@ -77,11 +77,11 @@ Steps:
 
 | VLAN | Name | Contents | DHCP | DNS handed out |
 |---|---|---|---|---|
-| 10 | Trusted | Personal devices, SSID-Home | ER605 | Node 1 (AdGuard) |
-| 20 | IoT | Smart plugs, TVs, assistants — SSID-IoT | ER605 | Node 1 (AdGuard) |
-| 30 | Guest | Guests — SSID-Guest, client isolation on | ER605 | Node 1 (AdGuard) or router |
+| 10 | Trusted | Personal devices, SSID-Home | ER605 | Node 1 + Node 2 (AdGuard) |
+| 20 | IoT | Smart plugs, TVs, assistants — SSID-IoT | ER605 | Node 1 + Node 2 (AdGuard) |
+| 30 | Guest | Guests — SSID-Guest, client isolation on | ER605 | Node 1 + Node 2 (AdGuard) |
 | 40 | Cameras | IP cameras, wired only | none/static | none |
-| 99 | Management | Node 1, Node 2, ER605, switch, EAPs | ER605 | Node 1 (AdGuard) |
+| 99 | Management | Node 1, Node 2, ER605, switch, EAPs | ER605 | Node 1 + Node 2 (AdGuard) |
 
 Native VLAN on trunks: **99** (management), never user traffic.
 
@@ -93,8 +93,8 @@ SSID → VLAN binding happens on the EAPs in the Omada controller — one SSID p
 |---|---|
 | VLAN 99 (infra) | Everything — servers reach all VLANs |
 | VLAN 10 (trusted) | Internet + all node services on 99 |
-| VLAN 20 (IoT) | Internet + Node 1: DNS 53, MQTT 1883, HA 8123, Z2M 8099 + Node 2: Immich 2283 |
-| VLAN 30 (guest) | Internet only (+ DNS) — **no LAN access**, client isolation |
+| VLAN 20 (IoT) | Internet + DNS 53 to Node 1 **and** Node 2 + MQTT 1883, HA 8123, Z2M 8099 on Node 1 + Immich 2283 on Node 2 |
+| VLAN 30 (guest) | Internet only (+ DNS 53 to both nodes) — **no LAN access**, client isolation |
 | VLAN 40 (cameras) | **Inbound from Node 2 only** — RTSP/HTTP camera ports (554, 8554, 8555). No internet, no other VLANs |
 | Any → VLAN 99 mgmt ports | Denied except from 99 itself and established flows |
 
@@ -123,8 +123,14 @@ The controller runs on **Node 2 (VLAN 99)** and manages ER605 + SG2428P + EAPs.
 
 ## DNS resilience
 
-- **Primary:** AdGuard Home on Node 1 (VLAN 99) — DHCP hands it out on every VLAN.
-- **Fallback:** the ER605's own DNS forwarder stays configured upstream — if Node 1 is down, clients that query the gateway directly still resolve. (Clients pointed solely at Node 1 will fail over per their OS resolver timeout; the router fallback covers new DHCP leases and manual config.)
+Two AdGuard Home instances — **primary on Node 1, secondary on Node 2** — both on VLAN 99, both handed out by DHCP (DNS server 1 = Node 1, DNS server 2 = Node 2).
+
+- **Why two:** if Node 1 reboots or fails, clients fail over to Node 2's instance instead of losing DNS entirely. Node 2 being the "heavy" node doesn't matter — AdGuard is ~100 MB RAM and DNS queries are trivial.
+- **Config parity:** AdGuard has no built-in replication. Configure Node 1 fully, then Settings → export `AdGuardHome.yaml` and import it on Node 2 (all IPs/rewrites are identical on both). Re-export after changing rewrites/blocklists.
+- **Upstream:** Cloudflare over DoH (`https://dns.cloudflare.com/dns-query`) — encrypted hop from the LAN edge. Trade-off: queries leave your network to Cloudflare; a self-hosted upstream (Unbound + DNSSEC) or NextDNS are the privacy-heavier alternatives.
+- **Local names:** DNS rewrites map `node1.homelab` → Node 1 IP and `node2.homelab` → Node 2 IP on both instances — handy for SSH/browser access. `.env` IPs remain the source of truth (bootstrap/Ansible/DHCP reservations need them before DNS exists).
+- **Firewall:** every user VLAN needs UDP+TCP 53 permitted to **both** node IPs — add this to the inter-VLAN rules or secondary DNS silently fails.
+- **Fallback:** the ER605's own DNS forwarder stays configured upstream — covers the router itself and any client that bypasses DHCP DNS.
 
 ## Remote access overlay
 
@@ -135,6 +141,6 @@ Tailscale runs on both nodes (+ devices) as an overlay independent of VLANs/fire
 - **PPPoE on the ER605, not the ONT** — eliminates double NAT; one firewall, one VPN endpoint, one place for port rules.
 - **VLAN segmentation** — least-privilege: cameras can't reach the internet or other VLANs, guests are isolated, IoT gets only the services it needs.
 - **Servers on a management VLAN** — infrastructure is unreachable from user VLANs except through explicit firewall rules; Node 1/2 compromise doesn't hand over the LAN.
-- **DNS on Node 1 with router fallback** — ad-blocking for the whole LAN while surviving server reboots.
+- **Dual AdGuard DNS (Node 1 primary, Node 2 secondary) + router fallback** — ad-blocking survives either server being down; encrypted upstream via Cloudflare DoH.
 - **Omada controller on Node 2** — management plane only; data plane survives its downtime.
 - **Tailscale overlay** — remote access decoupled from the physical topology and ISP.

@@ -1,0 +1,71 @@
+---
+# Node 1 specifics: appdata dirs (uid 1000 like bootstrap.sh), Mosquitto
+# config + optional password file, then bring the compose stack up.
+
+- name: Create Node 1 appdata dirs
+  ansible.builtin.file:
+    path: "{{ appdata_root }}/{{ item }}"
+    state: directory
+    owner: "1000"
+    group: "1000"
+    mode: "0755"
+  loop:
+    - adguardhome/work
+    - adguardhome/conf
+    - npm
+    - homeassistant
+    - mosquitto/config
+    - mosquitto/data
+    - mosquitto/log
+    - uptime-kuma
+    - tailscale
+
+- name: Install Mosquitto config
+  ansible.builtin.copy:
+    src: "{{ repo_dir }}/node1/config/mosquitto/mosquitto.conf"
+    dest: "{{ appdata_root }}/mosquitto/config/mosquitto.conf"
+    owner: "1000"
+    group: "1000"
+    mode: "0644"
+
+- name: Check Mosquitto password file
+  ansible.builtin.stat:
+    path: "{{ appdata_root }}/mosquitto/config/passwordfile"
+  register: mqtt_pwfile
+
+- name: Warn when MQTT credentials are missing
+  ansible.builtin.debug:
+    msg: >-
+      No Mosquitto passwordfile and mqtt_password not provided — the broker
+      will have no users. Re-run with:
+      ansible-playbook site.yml --limit node1
+      --extra-vars 'mqtt_user=USER mqtt_password=PASS'
+  when: not mqtt_pwfile.stat.exists and mqtt_password is not defined
+
+- name: Create Mosquitto password file
+  # Passwords go through no_log so they never hit the Ansible output/log.
+  ansible.builtin.command: >-
+    docker run --rm
+    -v {{ appdata_root }}/mosquitto/config:/mosquitto/config
+    eclipse-mosquitto:2.1.2-alpine
+    mosquitto_passwd -c -b /mosquitto/config/passwordfile
+    {{ mqtt_user | default('mqtt') }} {{ mqtt_password }}
+  args:
+    creates: "{{ appdata_root }}/mosquitto/config/passwordfile"
+  become_user: "{{ deploy_user }}"
+  when: mqtt_password is defined and not mqtt_pwfile.stat.exists
+  no_log: true
+
+- name: Pull Node 1 images
+  ansible.builtin.command: docker compose pull
+  args:
+    chdir: "{{ repo_dir }}/node1"
+  become_user: "{{ deploy_user }}"
+  changed_when: false
+
+- name: Start Node 1 stack
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: "{{ repo_dir }}/node1"
+  become_user: "{{ deploy_user }}"
+  changed_when: false   # compose is idempotent; the timer handles drift

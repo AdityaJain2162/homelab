@@ -57,7 +57,14 @@ Give Node 1 a **static IP or DHCP reservation** on the router — everything poi
 
 ## Deploy
 
-**Automated (recommended):**
+**Automated (recommended) — Ansible:**
+
+```bash
+cd ansible
+ansible-playbook site.yml --limit node1    # Docker, repo, timer, dirs, Mosquitto, compose up
+```
+
+Or the standalone script (does the same minus Ansible):
 
 ```bash
 bash scripts/bootstrap.sh    # idempotent — Docker, dirs, .env, Mosquitto creds, compose up
@@ -95,7 +102,11 @@ docker compose ps
 
 ## Post-setup checklist
 
-1. **AdGuard** → http://node1:3000 — run the wizard, set web port to **3000** (NPM owns :80), choose upstream DNS. Then on the router set DHCP DNS to Node 1's IP; **keep the router's own upstream DNS as fallback** so DNS survives AdGuard/NAS reboots.
+1. **AdGuard** → http://node1:3000 — run the wizard, set web port to **3000** (NPM owns :80). This is the **primary** of two DNS instances (Node 2 runs the secondary — see `node2/compose/dns.yml`). Configure:
+   - **Upstream:** DNS settings → add `https://dns.cloudflare.com/dns-query` (DoH — encrypted hop upstream).
+   - **DNS rewrites:** `node1.homelab` → `NODE1_IP`, `node2.homelab` → `NODE2_IP` (values from `.env`) — gives the LAN friendly names; the IPs stay the source of truth for bootstrap/Ansible.
+   - Then **export `AdGuardHome.yaml`** (Settings → export) and import it on Node 2's instance so both serve identical answers.
+   - On the router set DHCP DNS to **Node 1 (primary) + Node 2 (secondary)**; keep the router's own upstream DNS as fallback so DNS survives both nodes.
 2. **NPM** → http://node1:81 — default admin `admin@example.com` / `changeme` (change immediately). Use it for friendly hostnames + Let's Encrypt TLS on Node 1 apps.
 3. **Home Assistant** → http://node1:8123 — onboarding wizard.
 4. **Tailscale** → authenticate once:

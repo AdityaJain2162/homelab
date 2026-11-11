@@ -1,0 +1,12 @@
+# Shared vars for all homelab nodes — override per host in host_vars/ if needed.
+
+repo_url: https://github.com/AdityaJain2162/homelab.git
+repo_dir: /opt/homelab
+appdata_root: /opt/docker/appdata
+
+# dpkg --print-architecture on the nodes (x86_64 → amd64 for the Docker repo)
+docker_arch: amd64
+
+# Login/owner user on the nodes: owns the repo checkout, runs the deploy timer,
+# and is in the docker group (docker_host role). Set = your SSH user.
+deploy_user: CHANGE_ME
