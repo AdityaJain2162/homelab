@@ -16,7 +16,10 @@ GitHub-hosted CI can't reach LAN nodes, so deploy automation lives on the nodes 
 
 ## Prerequisites
 
-- Ansible ≥ 2.15 on **Linux, macOS, or WSL2** — it does not run natively on Windows. Any machine on the LAN (or on the tailnet, once Tailscale is up) works.
+- Ansible ≥ 2.15 — it does not run natively on Windows. Any machine that can SSH to the nodes works; pick one:
+  - **WSL2 Ubuntu on your workstation** (simplest to start): `sudo apt install ansible`, then SSH to the nodes over LAN or Tailscale.
+  - **Node 1 as the control node** ("infra manages infra"): install ansible on Node 1, run playbooks there — `--connection=local` for Node 1 itself, SSH for Node 2 over the LAN. Node 1 is always-on and idle, so it's a natural controller. The pull-deploy timers keep working regardless, so provisioning and day-2 deploys stay decoupled.
+  - Any other always-on Linux box on the tailnet works too.
 - SSH access to the nodes with a user that has sudo (passwordless sudo, or pass `--ask-become-pass`).
 - Nodes freshly installed: Ubuntu Server 26.04, OpenSSH enabled, on the network.
 
