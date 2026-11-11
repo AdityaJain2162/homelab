@@ -104,6 +104,10 @@ docker compose ps
 
 1. **AdGuard** → http://node1:3000 — run the wizard, set web port to **3000** (NPM owns :80). This is the **primary** of two DNS instances (Node 2 runs the secondary — see `node2/compose/dns.yml`). Configure:
    - **Upstream:** DNS settings → add `https://dns.cloudflare.com/dns-query` (DoH — encrypted hop upstream).
+   - **Blocklists:** Filters → DNS blocklists → add custom lists:
+     - `https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt` — HaGeZi Multi Pro
+     - `https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/tif.txt` — HaGeZi TiF threat intel (malware/phishing add-on, pairs with any tier)
+     (If jsdelivr ever fails, `raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt` is the direct source.)
    - **DNS rewrites:** `node1.homelab` → `NODE1_IP`, `node2.homelab` → `NODE2_IP` (values from `.env`) — gives the LAN friendly names; the IPs stay the source of truth for bootstrap/Ansible.
    - Then **export `AdGuardHome.yaml`** (Settings → export) and import it on Node 2's instance so both serve identical answers.
    - On the router set DHCP DNS to **Node 1 (primary) + Node 2 (secondary)**; keep the router's own upstream DNS as fallback so DNS survives both nodes.
