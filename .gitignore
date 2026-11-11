@@ -1,3 +1,4 @@
 # Secrets — never commit real env files (.env.example files are fine)
 .env
 **/.env
+__pycache__/
