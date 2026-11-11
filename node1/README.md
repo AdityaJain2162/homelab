@@ -18,7 +18,14 @@ Always-on box: DNS, reverse proxy, remote access, home automation, alerting. Mus
 
 **Ubuntu Server 26.04 LTS "Resolute"** — install once, don't touch.
 
-- Minimal install, ext4 on the whole 256 GB SSD, **no LVM**, OpenSSH enabled.
+- Server install — **minimal preferred, standard works fine**. ext4 on the whole 256 GB SSD, **no LVM**, OpenSSH enabled.
+- If you installed the **standard** image, disable the extras you don't need (saves RAM on 8 GB):
+
+  ```bash
+  sudo systemctl disable --now ModemManager.service multipathd.service open-iscsi.service fwupd.service 2>/dev/null
+  sudo apt purge -y landscape-client ubuntu-advantage-tools 2>/dev/null
+  sudo snap list    # remove snaps you don't want
+  ```
 - 26.04 notes: `sudo` is sudo-rs, cgroup v2 only, kernel 7.0.
 - Docker comes from Docker's official apt repo — `resolute` is supported:
 

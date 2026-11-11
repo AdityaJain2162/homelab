@@ -42,7 +42,7 @@ Full detail in `docs/network.md` — the essentials:
 
 ## Provisioning — what to do when given node IPs
 
-Prereq: run Ansible from Linux/macOS/WSL2 (not native Windows), with SSH access to the nodes (Ubuntu Server 26.04, OpenSSH on).
+Prereq: run Ansible from Linux/macOS/WSL2 (not native Windows), with SSH access to the nodes (Ubuntu Server 26.04, OpenSSH on). Minimal install is preferred but the standard server image works — optional cleanup steps in `node1/README.md`.
 
 1. Edit `ansible/inventory.ini` — set `ansible_host` to each node's IP and `ansible_user` to the login user.
 2. Edit `ansible/group_vars/all.yml` — set `deploy_user` (the user that owns `/opt/homelab` and runs the deploy timer; must be in the docker group — the `docker_host` role handles that).
