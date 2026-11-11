@@ -161,6 +161,11 @@ services:
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
+    command:
+      # Athlon II is weak — defaults (10s housekeeping, all metric sets) eat CPU.
+      - '--housekeeping_interval=30s'   # was 10s — matches our 30s scrape interval
+      - '--docker_only=true'            # skip raw cgroup stats, docker containers only
+      - '--disable_metrics=diskIO,percpu,tcp,udp,process,accelerator,hugetlb,cpu_topology,resctrl,memory_numa,app,cpuSet,sched,psi,referenced_memory,perf_event,cpuLoad'
 
   blackbox:
     image: prom/blackbox-exporter:v0.29.1
