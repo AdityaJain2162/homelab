@@ -152,6 +152,37 @@ services:
     environment:
       - TZ=${TZ}
 
+  victoria-metrics:
+    image: victoriametrics/victoria-metrics:v1.155.0
+    container_name: victoria-metrics
+    restart: unless-stopped
+    ports:
+      - "8428:8428"    # Prometheus-compatible storage + query API + UI
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # reach host-network svcs (:9100, :19999)
+    volumes:
+      - /opt/docker/appdata/victoria-metrics:/storage
+      - ./config/vm:/etc/vm:ro
+    command:
+      - '-retentionPeriod=3'          # months — 3-month metric retention
+      - '-promscrape.config=/etc/vm/scrape.yml'
+      - '-storageDataPath=/storage'
+
+  grafana:
+    image: grafana/grafana:13.2.5
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3002:3000"    # admin UI — 3000 is AdGuard, 3001 was Kuma
+    volumes:
+      - /opt/docker/appdata/grafana:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      - TZ=${TZ}
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
+      - GF_USERS_ALLOW_SIGN_UP=false
+
   # zigbee2mqtt — uncomment when the USB coordinator arrives.
   # Find the device path first: ls -l /dev/serial/by-id/
   # zigbee2mqtt:

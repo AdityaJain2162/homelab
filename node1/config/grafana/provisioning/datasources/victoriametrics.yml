@@ -1,0 +1,11 @@
+# Grafana datasource provisioning — auto-creates the VictoriaMetrics datasource
+# on first boot. Mounted at /etc/grafana/provisioning by docker-compose.yml.
+apiVersion: 1
+
+datasources:
+  - name: VictoriaMetrics
+    type: prometheus
+    access: proxy
+    url: http://victoria-metrics:8428
+    isDefault: true
+    editable: true
