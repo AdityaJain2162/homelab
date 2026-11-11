@@ -15,6 +15,8 @@ cd ~/homelab && git pull
 # 1. state dirs + TLS cert
 sudo mkdir -p /opt/docker/appdata/vault/{data,tls}
 sudo chown -R 1000:1000 /opt/docker/appdata/vault
+# vault image runs as uid 100 — data + tls dirs must be writable/readable by it
+sudo chown -R 100:1000 /opt/docker/appdata/vault/data /opt/docker/appdata/vault/tls
 bash node1/scripts/vault-tls.sh            # self-signed cert, 10y validity
 
 # 2. start Vault (it will report "sealed")

@@ -14,6 +14,8 @@ sudo openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
   -addext "subjectAltName=DNS:vault.homelab,DNS:node1.homelab,IP:${IP}"
 sudo chmod 600 "$TLS_DIR/vault.key"
 sudo chmod 644 "$TLS_DIR/vault.crt"
+# container runs as uid 100 — it must be able to read the certs
+sudo chown 100:1000 "$TLS_DIR/vault.key" "$TLS_DIR/vault.crt"
 
 echo "TLS cert written to $TLS_DIR"
 echo "Restart Vault to pick it up:  docker compose restart vault"
