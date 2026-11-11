@@ -54,6 +54,7 @@ Give Node 1 a **static IP or DHCP reservation** on the router — everything poi
 | Tailscale | `tailscale/tailscale:v1.104.5` | — | Mesh VPN / remote access |
 | Node Exporter | `quay.io/prometheus/node-exporter:v1.12.1` | 9100 | Metrics → VictoriaMetrics on Node 2 |
 | Zigbee2MQTT | *(commented out)* | 8099 | Enable when the USB dongle arrives |
+| Asterisk PBX | *(planned — commented out)* | 5060 + RTP | SIP intercom + trunk — see [`docs/voice.md`](../docs/voice.md) |
 
 ## Deploy
 

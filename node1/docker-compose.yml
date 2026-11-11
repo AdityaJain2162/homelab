@@ -111,3 +111,17 @@ services:
   #     - ZIGBEE2MQTT_CONFIG_MQTT_SERVER=mqtt://mosquitto:1883
   #     - ZIGBEE2MQTT_CONFIG_MQTT_USER=${MQTT_USER}
   #     - ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD=${MQTT_PASSWORD}
+
+  # asterisk — PLANNED: SIP intercom + provider trunk. See docs/voice.md.
+  # Uncomment when IP phones and trunk credentials are ready.
+  # asterisk:
+  #   image: andrius/asterisk:22.5.2_debian-trixie   # TODO: verify tag at deploy
+  #   container_name: asterisk
+  #   restart: unless-stopped
+  #   network_mode: host    # SIP/RTP need host ports + host IP in SDP
+  #   volumes:
+  #     - /opt/docker/appdata/asterisk/etc:/etc/asterisk
+  #     - /opt/docker/appdata/asterisk/spool:/var/spool/asterisk
+  #     - /opt/docker/appdata/asterisk/logs:/var/log/asterisk
+  #   environment:
+  #     - TZ=${TZ}

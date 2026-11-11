@@ -79,6 +79,8 @@ Network topology (WAN, PPPoE, VLANs, firewall rules): [`docs/network.md`](docs/n
 | Omada Controller | 2 | Needs AVX (MongoDB 8) — cannot run on Node 1 |
 | Gluetun + qBittorrent + Sonarr/Radarr/Prowlarr/Bazarr | 2 | All mount `/data` locally → hardlinks work |
 | VictoriaMetrics, Grafana, Loki, Alloy, cAdvisor | 2 | Scrapes Node 1's node-exporter over LAN |
+| AdGuard Home (secondary DNS) | 2 | Same config as Node 1 — `compose/dns.yml` |
+| Asterisk PBX + SIP trunk | 1 (planned) | IP-phone intercom + outbound — [`docs/voice.md`](docs/voice.md) |
 
 ## Repo layout
 
