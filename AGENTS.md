@@ -68,7 +68,7 @@ Prereq: run Ansible from Linux/macOS/WSL2 (not native Windows), with SSH access 
 These need a browser or interactive auth — guide the user through them:
 
 1. **AdGuard** → `http://<node1-ip>:3000` — wizard; set web port 3000. Then:
-   - Upstream: `https://dns.cloudflare.com/dns-query` (DoH)
+   - Upstreams: `https://dns.cloudflare.com/dns-query` (DoH) **plus** `tls://one.one.one.one` (DoT) — AdGuard races upstreams and uses the fastest; DoT is the fallback because Node 1's Athlon II lacks AES-NI and pure-DoH cold lookups measured ~147 ms vs ~20 ms direct.
    - Blocklists: `https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt` and `.../adblock/tif.txt`
    - DNS rewrites: `node1.homelab` → Node 1 IP, `node2.homelab` → Node 2 IP
    - **Export `AdGuardHome.yaml`** for Node 2's instance (do this BEFORE Node 2 exists is fine — keep the file safe, it contains no secrets but does contain your config)

@@ -121,7 +121,7 @@ docker compose ps
 ## Post-setup checklist
 
 1. **AdGuard** → http://node1:3000 — run the wizard, set web port to **3000** (NPM owns :80). This is the **primary** of two DNS instances (Node 2 runs the secondary — see `node2/compose/dns.yml`). Configure:
-   - **Upstream:** DNS settings → add `https://dns.cloudflare.com/dns-query` (DoH — encrypted hop upstream).
+   - **Upstreams:** DNS settings → add `https://dns.cloudflare.com/dns-query` (DoH) **and** `tls://one.one.one.one` (DoT). AdGuard races upstreams and uses the fastest per query — DoT compensates for Node 1's no-AES-NI CPU making pure-DoH cold lookups ~7× slower (~147 ms vs ~20 ms).
    - **Blocklists:** Filters → DNS blocklists → add custom lists:
      - `https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt` — HaGeZi Multi Pro
      - `https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/tif.txt` — HaGeZi TiF threat intel (malware/phishing add-on, pairs with any tier)
