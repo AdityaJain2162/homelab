@@ -19,5 +19,8 @@ cluster_addr = "https://vault.homelab:8201"
 
 ui = true
 
+# Required explicit since Vault 1.20 — we have IPC_LOCK cap, so keep mlock on.
+disable_mlock = false
+
 default_lease_ttl = "768h"   # 32 days
 max_lease_ttl     = "8760h"  # 1 year
