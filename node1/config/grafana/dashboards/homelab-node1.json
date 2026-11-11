@@ -258,10 +258,10 @@
       },
       "targets": [
         {
-          "expr": "node_hwmon_temp_celsius{chip=~\".*k10temp.*\"}",
+          "expr": "avg(node_hwmon_temp_celsius or node_thermal_zone_temp)",
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
-          "legendFormat": "{{sensor}}"
+          "legendFormat": "avg all sensors"
         }
       ]
     },
@@ -762,7 +762,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name!=\"\"}[5m])) * 100",
+          "expr": "max by (name) (rate(container_cpu_usage_seconds_total{name!=\"\"}[5m])) * 100",
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
           "legendFormat": "{{name}}"
@@ -797,7 +797,7 @@
       },
       "targets": [
         {
-          "expr": "container_memory_working_set_bytes{name!=\"\"}",
+          "expr": "max by (name) (container_memory_working_set_bytes{name!=\"\"})",
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
           "legendFormat": "{{name}}"
