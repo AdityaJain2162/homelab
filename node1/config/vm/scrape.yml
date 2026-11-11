@@ -30,7 +30,6 @@ scrape_configs:
       - targets:
           - adguardhome:3000            # AdGuard admin UI
           - grafana:3000                # Grafana (host publishes :3002)
-          - victoria-metrics:8428      # VM UI/API
           - host.docker.internal:8123   # Home Assistant (host network)
     relabel_configs:
       - source_labels: [__address__]
