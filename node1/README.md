@@ -66,12 +66,13 @@ Give Node 1 a **static IP or DHCP reservation** on the router — everything poi
 | Home Assistant | `ghcr.io/home-assistant/home-assistant:2026.11.1` | 8123 | Home automation (host network for discovery) |
 | Mosquitto | `eclipse-mosquitto:2.1.2-alpine` | 1883, 9001 | MQTT broker — also used by Frigate on Node 2 |
 | Uptime Kuma | `louislam/uptime-kuma:2.5.9` | 3001 | Uptime monitoring/alerting |
-| Tailscale | `tailscale/tailscale:v1.104.5` | — | Mesh VPN / remote access |
+| Tailscale | `tailscale/tailscale:v1.104.4` | — | Mesh VPN / remote access |
+| HashiCorp Vault | `hashicorp/vault:2.2.1` | 8200 | Local secrets management — see [`docs/vault.md`](../docs/vault.md) |
 | Node Exporter | `quay.io/prometheus/node-exporter:v1.12.1` | 9100 | Metrics → VictoriaMetrics on Node 2 |
 | Zigbee2MQTT | *(commented out)* | 8099 | Enable when the USB dongle arrives |
 | Asterisk PBX | *(planned — commented out)* | 5060 + RTP | SIP intercom + trunk — see [`docs/voice.md`](../docs/voice.md) |
 
-Host-level (installed by the Ansible `hardware_monitor` role, not compose): **smartmontools/smartd** watches all drives — short self-test Sun 02:00, long monthly — and alerts via `scripts/hw-alert.sh` to Telegram/Discord (targets in `/etc/homelab-alert.env`). **node-exporter** exposes SMART attributes + temps as metrics for Grafana history/alerting on Node 2.
+Host-level (installed by the Ansible `hardware_monitor` role, not compose): **smartmontools/smartd** watches all drives — short self-test Sun 02:00, long monthly — and alerts via `scripts/hw-alert.sh` to Telegram/Discord (targets in `/etc/homelab-alert.env`). **node-exporter** exposes host metrics for Grafana history/alerting on Node 2 (its `smartmon` collector was removed upstream in v1.9 — drive health is covered by smartd + `hw-alert.sh` instead).
 
 ## Deploy
 
@@ -95,7 +96,7 @@ cd node1
 cp .env.example .env          # edit TZ etc. if needed
 
 # 1. Create state dirs
-sudo mkdir -p /opt/docker/appdata/{adguardhome/{work,conf},npm,homeassistant,mosquitto/{config,data,log},uptime-kuma,tailscale}
+sudo mkdir -p /opt/docker/appdata/{adguardhome/{work,conf},npm,homeassistant,mosquitto/{config,data,log},uptime-kuma,tailscale,vault/{data,tls}}
 sudo chown -R 1000:1000 /opt/docker/appdata   # PUID/PGID=1000; harmless for images that ignore it
 
 # 2. Mosquitto credentials (MQTT user for Zigbee2MQTT + Frigate)
@@ -135,6 +136,7 @@ docker compose ps
    `docker compose exec tailscale tailscale up` (prints a login URL), or set `TS_AUTHKEY` in `.env` for headless auth.
 5. **Uptime Kuma** → http://node1:3001 — create admin, add monitors (router, Node 2 services once they exist), configure a push channel (Telegram/ntfy/email).
 6. **Mosquitto** — credentials created above are used by Zigbee2MQTT (here) and Frigate (Node 2 → `mqtt://$NODE1_IP:1883`, value from `.env`).
+7. **Vault** → https://node1:8200 — generate TLS cert (`scripts/vault-tls.sh`), `docker compose up -d vault`, `vault operator init`, save unseal keys + root token offline, unseal. Full runbook: [`docs/vault.md`](../docs/vault.md).
 
 ## Enabling Zigbee2MQTT (when the dongle arrives)
 

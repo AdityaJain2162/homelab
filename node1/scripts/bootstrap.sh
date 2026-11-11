@@ -67,7 +67,7 @@ fi
 
 # ---------- 4. state dirs (container PUID/PGID = 1000) ----------
 info "creating state dirs under $APPDATA"
-sudo mkdir -p "$APPDATA"/{adguardhome/{work,conf},npm,homeassistant,mosquitto/{config,data,log},uptime-kuma,tailscale}
+sudo mkdir -p "$APPDATA"/{adguardhome/{work,conf},npm,homeassistant,mosquitto/{config,data,log},uptime-kuma,tailscale,vault/{data,tls}}
 sudo chown -R 1000:1000 "$APPDATA"
 
 # ---------- 5. .env ----------

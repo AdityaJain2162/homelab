@@ -6,7 +6,7 @@ Read this first. It is the runbook for provisioning and operating the homelab. I
 
 Two-node homelab, documented as resumable infrastructure-as-code.
 
-- **Node 1** (owned, live): always-on infrastructure — AdGuard DNS (primary), Nginx Proxy Manager, Tailscale, Home Assistant, Mosquitto, Uptime Kuma, node-exporter. Athlon II X2 / 8 GB / **no AVX** — nothing heavy goes here.
+- **Node 1** (owned, live): always-on infrastructure — AdGuard DNS (primary), Nginx Proxy Manager, Tailscale, Home Assistant, Mosquitto, Uptime Kuma, node-exporter, **HashiCorp Vault** (local secrets store). Athlon II X2 / 8 GB / **no AVX** — nothing heavy goes here.
 - **Node 2** (planned purchase): ZFS storage (pool created fresh there — never on Node 1), Frigate, Immich, Omada, media pipeline, monitoring, and a **secondary AdGuard DNS** instance.
 - ER605 router owns routing/DHCP/PPPoE; VLAN plan and firewall rules in `docs/network.md`.
 
@@ -37,7 +37,7 @@ Full detail in `docs/network.md` — the essentials:
 | `node2/` | Drafts: `compose/{dns,frigate,immich,media,monitoring,omada}.yml`, `config/`, `.env.example`, ZFS docs, `purchasing.md` |
 | `ansible/` | Provisioning: `inventory.ini`, `site.yml`, `group_vars/all.yml`, roles `docker_host`, `homelab_repo`, `node_deploy`, `node1_stack`, `node2_stack` |
 | `scripts/` | `update.sh` (manual compose pull/up), `pull-deploy.sh` (git pull + compose up; runs on-node via systemd timer every 6h), `hw-alert.sh` (smartd → Telegram/Discord) |
-| `docs/` | `network.md` (PPPoE/VLAN/firewall/mermaid), `master-plan-v2-reference.md` |
+| `docs/` | `network.md` (PPPoE/VLAN/firewall/mermaid), `vault.md` (secrets management runbook), `master-plan-v2-reference.md` |
 | `.github/workflows/ci.yml` | compose config validation, yamllint, shellcheck, trivy secret scan |
 
 ## Provisioning — what to do when given node IPs
