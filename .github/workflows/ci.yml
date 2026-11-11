@@ -1,0 +1,52 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  compose:
+    name: Validate compose files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create placeholder env files
+        # .env files are gitignored; compose needs them to exist for env_file/interpolation
+        run: |
+          touch node1/.env node2/.env
+          printf 'PUID=1000\nPGID=1000\nTZ=Asia/Kolkata\nIMMICH_VERSION=v0.0.0\nUPLOAD_LOCATION=/tmp\nDB_DATA_LOCATION=/tmp\nDB_PASSWORD=x\nDB_USERNAME=x\nDB_DATABASE_NAME=x\nVPN_SERVICE_PROVIDER=x\n' > node2/.env
+
+      - name: docker compose config
+        run: |
+          set -e
+          docker compose -f node1/docker-compose.yml config -q
+          for f in node2/compose/*.yml; do
+            echo "validating $f"
+            docker compose --env-file node2/.env -f "$f" config -q
+          done
+
+  lint:
+    name: Lint YAML and shell
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install linters
+        run: sudo apt-get update && sudo apt-get install -y yamllint shellcheck
+      - name: yamllint
+        run: yamllint -c .yamllint.yml .
+      - name: shellcheck
+        run: shellcheck node1/scripts/*.sh scripts/*.sh
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # TODO: pin to a release tag instead of master
+      - uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scanners: secret
+          exit-code: "1"

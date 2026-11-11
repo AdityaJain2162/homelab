@@ -1,0 +1,101 @@
+# DRAFT — Node 2 media pipeline. Verify image tags at deploy time.
+# Gluetun owns the VPN tunnel; qBittorrent shares its network namespace
+# so ALL torrent traffic exits via VPN. *Arr apps stay on the normal
+# network — only torrent payloads are tunneled.
+# Run from node2/: docker compose --env-file .env -f compose/media.yml up -d
+name: node2-media
+
+services:
+  gluetun:
+    image: qmcgaw/gluetun:v3.41.3
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+      - VPN_TYPE=${VPN_TYPE:-wireguard}
+      - SERVER_COUNTRIES=${SERVER_COUNTRIES:-}
+      - TZ=${TZ}
+    env_file:
+      - ../.env    # injects provider credentials (WIREGUARD_PRIVATE_KEY, OPENVPN_USER/PASSWORD, etc.)
+    volumes:
+      - /opt/docker/appdata/gluetun:/gluetun
+    ports:
+      # Published into the shared netns → these reach qBittorrent's listeners
+      - "8080:8080"       # qBittorrent web UI
+      - "6881:6881"       # torrent peer port (forward on router for incoming peers)
+      - "6881:6881/udp"
+    restart: unless-stopped
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:5.3.0    # TODO: verify tag at deploy
+    container_name: qbittorrent
+    restart: unless-stopped
+    network_mode: "service:gluetun"                 # killswitch: no VPN → no torrent traffic
+    depends_on:
+      - gluetun
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - WEBUI_PORT=8080
+    volumes:
+      - /opt/docker/appdata/qbittorrent:/config
+      - /data:/data                                  # ZFS datapool/data → download to /data/torrents
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:4.0.20
+    container_name: sonarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /opt/docker/appdata/sonarr:/config
+      - /data:/data                                  # media root: /data/media/tv
+    ports:
+      - "8989:8989"
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:6.4.4
+    container_name: radarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /opt/docker/appdata/radarr:/config
+      - /data:/data                                  # media root: /data/media/movies
+    ports:
+      - "7878:7878"
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:2.7.0       # TODO: verify tag at deploy
+    container_name: prowlarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /opt/docker/appdata/prowlarr:/config
+    ports:
+      - "9696:9696"
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:1.6.2
+    container_name: bazarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /opt/docker/appdata/bazarr:/config
+      - /data:/data
+    ports:
+      - "6767:6767"

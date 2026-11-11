@@ -1,0 +1,113 @@
+# Node 1 — always-on infrastructure.
+# Ubuntu Server 26.04 + Docker. See README.md for setup.
+# All image tags pinned — update manually (no Watchtower).
+
+services:
+  adguard:
+    image: adguard/adguardhome:v0.107.80
+    container_name: adguardhome
+    restart: unless-stopped
+    ports:
+      - "53:53/tcp"    # DNS
+      - "53:53/udp"    # DNS
+      - "3000:3000"    # admin UI — set AdGuard web port to 3000 in its settings (NPM owns :80)
+    volumes:
+      - /opt/docker/appdata/adguardhome/work:/opt/adguardhome/work
+      - /opt/docker/appdata/adguardhome/conf:/opt/adguardhome/conf
+
+  npm:
+    image: jc21/nginx-proxy-manager:2.16.0
+    container_name: npm
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "81:81"        # admin UI
+    volumes:
+      - /opt/docker/appdata/npm:/data
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:2026.11.1
+    container_name: homeassistant
+    restart: unless-stopped
+    network_mode: host    # required for mDNS/SSDP device discovery
+    volumes:
+      - /opt/docker/appdata/homeassistant:/config
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - TZ=${TZ}
+
+  mosquitto:
+    image: eclipse-mosquitto:2.1.2-alpine
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"    # MQTT — Zigbee2MQTT here, Frigate on Node 2
+      - "9001:9001"    # MQTT over WebSockets
+    volumes:
+      - /opt/docker/appdata/mosquitto/config:/mosquitto/config
+      - /opt/docker/appdata/mosquitto/data:/mosquitto/data
+      - /opt/docker/appdata/mosquitto/log:/mosquitto/log
+    environment:
+      - TZ=${TZ}
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:2.5.9    # NB: :latest still points at v1 — keep pinned
+    container_name: uptime-kuma
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - /opt/docker/appdata/uptime-kuma:/app/data
+    environment:
+      - TZ=${TZ}
+
+  tailscale:
+    image: tailscale/tailscale:v1.104.5
+    container_name: tailscale
+    hostname: node1
+    restart: unless-stopped
+    environment:
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+      # - TS_AUTHKEY=tskey-auth-...   # optional headless auth; else: docker compose exec tailscale tailscale up
+    volumes:
+      - /opt/docker/appdata/tailscale:/var/lib/tailscale
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - net_raw
+
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.12.1
+    container_name: node-exporter
+    restart: unless-stopped
+    network_mode: host    # exposes :9100 on the LAN for VictoriaMetrics on Node 2
+    pid: host
+    command:
+      - '--path.rootfs=/host'
+    volumes:
+      - '/:/host:ro,rslave'
+
+  # zigbee2mqtt — uncomment when the USB coordinator arrives.
+  # Find the device path first: ls -l /dev/serial/by-id/
+  # zigbee2mqtt:
+  #   image: ghcr.io/koenkk/zigbee2mqtt:latest   # TODO: pin a version tag at deploy
+  #   container_name: zigbee2mqtt
+  #   restart: unless-stopped
+  #   devices:
+  #     - /dev/serial/by-id/usb-Itead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_XXXX:/dev/ttyUSB0
+  #   volumes:
+  #     - /opt/docker/appdata/zigbee2mqtt:/app/data
+  #     - /run/udev:/run/udev:ro
+  #   ports:
+  #     - "8099:8080"    # frontend
+  #   environment:
+  #     - TZ=${TZ}
+  #     - ZIGBEE2MQTT_CONFIG_MQTT_SERVER=mqtt://mosquitto:1883
+  #     - ZIGBEE2MQTT_CONFIG_MQTT_USER=${MQTT_USER}
+  #     - ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD=${MQTT_PASSWORD}

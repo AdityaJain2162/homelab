@@ -1,0 +1,84 @@
+# DRAFT — Node 2 monitoring stack. Verify image tags at deploy time.
+# Run from node2/: docker compose --env-file .env -f compose/monitoring.yml up -d
+name: node2-monitoring
+
+services:
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.155.0
+    container_name: victoriametrics
+    restart: unless-stopped
+    command:
+      - "-storageDataPath=/storage"
+      - "-retentionPeriod=6"        # ~6 months of metrics
+    ports:
+      - "8428:8428"                 # vmui + remote-write endpoint
+    volumes:
+      - /opt/docker/appdata/monitoring/victoriametrics:/storage
+
+  grafana:
+    image: grafana/grafana:13.2.5
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - TZ=${TZ}
+    volumes:
+      - /opt/docker/appdata/monitoring/grafana:/var/lib/grafana
+      - ../config/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+
+  loki:
+    image: grafana/loki:3.7.9
+    container_name: loki
+    restart: unless-stopped
+    volumes:
+      - ../config/loki/loki.yaml:/etc/loki/local-config.yaml:ro
+      - /opt/docker/appdata/monitoring/loki:/loki
+    ports:
+      - "3100:3100"
+
+  alloy:
+    image: grafana/alloy:v1.21.3
+    container_name: alloy
+    restart: unless-stopped
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ../config/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro    # for docker log shipping (TODO config)
+      - /opt/docker/appdata/monitoring/alloy:/var/lib/alloy/data
+    ports:
+      - "12345:12345"               # Alloy UI
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.60.6
+    container_name: cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "8085:8080"
+
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.12.1
+    container_name: node-exporter
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    command:
+      - '--path.rootfs=/host'
+    volumes:
+      - '/:/host:ro,rslave'
