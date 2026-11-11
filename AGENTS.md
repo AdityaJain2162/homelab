@@ -20,6 +20,15 @@ Two-node homelab, documented as resumable infrastructure-as-code.
 6. **Node 1 must survive Node 2 being off** — DNS primary, MQTT, HA, Kuma, Tailscale all live there.
 7. Commit as the repo owner (no tool attribution trailers). Push to `main` on `AdityaJain2162/homelab`.
 
+## Network quick reference
+
+Full detail in `docs/network.md` — the essentials:
+
+- **WAN:** Airtel fiber → ONT in bridge mode → ER605 WAN1 dials PPPoE on **VLAN 100** (tagged). No double NAT.
+- **VLANs:** 10 Trusted · 20 IoT · 30 Guest · 40 Cameras · 99 Management (both nodes, router, switch, APs). Native VLAN on trunks: **99**. Full inter-VLAN firewall table in `docs/network.md`.
+- **DNS:** AdGuard on Node 1 (primary) + Node 2 (secondary), handed out by DHCP; firewall must allow UDP+TCP 53 to **both** node IPs from every user VLAN.
+- **Omada:** controller on Node 2 manages ER605/SG2428P/EAPs — management plane only, data plane survives its downtime. VLAN/SSID/firewall config is scriptable via the Omada Open API (v5.9+) or the community Terraform provider; initial admin/site creation and device adoption are one-time manual steps. Not covered by Ansible.
+
 ## Repo map
 
 | Path | Contents |

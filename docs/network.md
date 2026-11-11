@@ -10,7 +10,7 @@ flowchart TB
     ONT["Airtel ONT<br/>(bridge mode — no routing/NAT)"]
   end
 
-  ONT -->|"PPPoE dial (Airtel creds)"| ER605["ER605 Omada Gateway<br/>PPPoE client · per-VLAN DHCP · inter-VLAN firewall"]
+  ONT -->|"PPPoE dial · VLAN 100 (Airtel creds)"| ER605["ER605 Omada Gateway<br/>PPPoE client · per-VLAN DHCP · inter-VLAN firewall"]
 
   ER605 <-->|"trunk · 802.1Q"| SW["SG2428P<br/>24× GbE PoE+ managed switch"]
 
@@ -48,7 +48,7 @@ flowchart TB
 
 **Current state:** the ISP-provided ONT/router does everything — PPPoE dial, NAT, DHCP, Wi-Fi.
 
-**Target state:** the ONT becomes a dumb bridge; the ER605 dials PPPoE itself.
+**Target state:** the ONT becomes a dumb bridge; the ER605 dials PPPoE itself. Airtel's PPPoE session is **VLAN-tagged (ID 100)** — the ER605 WAN1 interface must match whatever tagging the bridged ONT passes through (tagged VLAN 100 sub-interface, or untagged if the ONT strips the tag — verify against the ONT's bridge config/ISP docs).
 
 ```mermaid
 flowchart LR
@@ -70,7 +70,7 @@ Steps:
 
 1. Request **bridge mode** from the ISP (usually via their app/support). If refused, the fallback is ER605 WAN on the ONT's private subnet — everything still works, you just keep double NAT and must port-forward on both boxes.
 2. Put the ONT in bridge mode; connect its LAN port to ER605 WAN1.
-3. On the ER605: WAN1 → connection type **PPPoE**, enter the ISP credentials → it gets the public IP.
+3. On the ER605: WAN1 → connection type **PPPoE**, VLAN ID **100** (Airtel), enter the ISP credentials → it gets the public IP.
 4. Disable the ONT's Wi-Fi (or leave it off) — all Wi-Fi moves to the EAPs.
 
 ## VLAN plan
@@ -120,6 +120,15 @@ The controller runs on **Node 2 (VLAN 99)** and manages ER605 + SG2428P + EAPs.
 - This is why the controller is acceptable on the "heavy" node: it is a management plane, not a data plane.
 - Adoption requirement: controller must be reachable on VLAN 99; set its inform URL to `http://$NODE2_IP:8088` (value from `node2/.env`) so devices find it after adoption.
 - Controller software needs AVX (MongoDB 8) → Node 2 only, never Node 1.
+
+### Can the Omada setup be scripted?
+
+Mostly yes — but not through Ansible (that manages the nodes, not the network gear):
+
+- **Open API (official, controller v5.9+):** enable under Global View → Settings → Platform Integration → Open API, create a Client ID/Secret. Covers sites, devices, WLAN groups/SSIDs, LAN networks, firewall rules, DHCP — read and write.
+- **Terraform:** community `terraform-provider-omada` expresses VLANs, DHCP scopes, firewall rules, SSIDs and switch ports as code — the closest thing to full network-as-code.
+- **Internal Web API v2 (undocumented):** covers the remaining bits (port profiles, mDNS) but uses a quirky triple-auth flow; community helper libs exist.
+- **Manual once:** initial admin account + site creation, and device adoption (set the inform URL — devices then appear as pending and can be adopted via API/UI). After that, config changes are API-drivable.
 
 ## DNS resilience
 
