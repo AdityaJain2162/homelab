@@ -9,4 +9,4 @@ docker_arch: amd64
 
 # Login/owner user on the nodes: owns the repo checkout, runs the deploy timer,
 # and is in the docker group (docker_host role). Set = your SSH user.
-deploy_user: CHANGE_ME
+deploy_user: bruce
