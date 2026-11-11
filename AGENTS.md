@@ -68,7 +68,7 @@ Prereq: run Ansible from Linux/macOS/WSL2 (not native Windows), with SSH access 
 These need a browser or interactive auth — guide the user through them:
 
 1. **AdGuard** → `http://<node1-ip>:3000` — wizard; set web port 3000. Then:
-   - Upstreams: `https://dns.cloudflare.com/dns-query` (DoH) **plus** `tls://one.one.one.one` (DoT) — AdGuard races upstreams and uses the fastest; DoT is the fallback because Node 1's Athlon II lacks AES-NI and pure-DoH cold lookups measured ~147 ms vs ~20 ms direct.
+   - Upstreams: `tls://1.1.1.1`, `tls://8.8.8.8`, `https://dns.cloudflare.com/dns-query` (parallel race, fastest wins). DoT measured ~20 ms on Node 1's no-AES-NI CPU; pure-DoH cold lookups were ~147 ms. A ready-made config is committed at `node1/config/adguard/AdGuardHome.yaml` — usable for fresh installs/Node 2 (fresh bcrypt hash required).
    - Blocklists: `https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt` and `.../adblock/tif.txt`
    - DNS rewrites: `node1.homelab` → Node 1 IP, `node2.homelab` → Node 2 IP
    - **Export `AdGuardHome.yaml`** for Node 2's instance (do this BEFORE Node 2 exists is fine — keep the file safe, it contains no secrets but does contain your config)
@@ -85,7 +85,7 @@ These need a browser or interactive auth — guide the user through them:
 2. ZFS: cap ARC ~6 GiB, create 3-way mirror `datapool` fresh on the 3 HDDs, datasets `/data`, `/srv/photos`, `/srv/shares` + quotas — exact commands in `node2/README.md`. Frigate disk: ext4 at `/media/frigate/recordings`.
 3. Fill `node2/.env` (IPs, `DB_PASSWORD`, `GRAFANA_ADMIN_PASSWORD`, VPN creds).
 4. Bring stacks up in order: `dns` → `immich` → `frigate` → `media` (verify Gluetun VPN IP before qBittorrent) → `monitoring` → `omada`.
-5. Import the saved `AdGuardHome.yaml` into Node 2's AdGuard (`ADGUARD_WEB_PORT`, default 3001).
+5. Give Node 2's AdGuard its config — either import the saved `AdGuardHome.yaml`, or deploy the template `node1/config/adguard/AdGuardHome.yaml` with `bind_port` set to `ADGUARD_WEB_PORT` (default 3001) and a fresh password hash.
 
 ## Verify
 

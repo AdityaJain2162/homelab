@@ -121,13 +121,13 @@ docker compose ps
 ## Post-setup checklist
 
 1. **AdGuard** → http://node1:3000 — run the wizard, set web port to **3000** (NPM owns :80). This is the **primary** of two DNS instances (Node 2 runs the secondary — see `node2/compose/dns.yml`). Configure:
-   - **Upstreams:** DNS settings → add `https://dns.cloudflare.com/dns-query` (DoH) **and** `tls://one.one.one.one` (DoT). AdGuard races upstreams and uses the fastest per query — DoT compensates for Node 1's no-AES-NI CPU making pure-DoH cold lookups ~7× slower (~147 ms vs ~20 ms).
+   - **Upstreams:** `tls://1.1.1.1`, `tls://8.8.8.8`, `https://dns.cloudflare.com/dns-query` — AdGuard races them in parallel and uses the fastest per query. DoT measures ~20 ms even on Node 1's no-AES-NI CPU; pure DoH cold lookups were ~147 ms. A ready-made config is committed at `config/adguard/AdGuardHome.yaml` — use it for fresh installs or Node 2 instead of repeating the wizard (generate a fresh bcrypt password hash first, see file header).
    - **Blocklists:** Filters → DNS blocklists → add custom lists:
      - `https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt` — HaGeZi Multi Pro
      - `https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/tif.txt` — HaGeZi TiF threat intel (malware/phishing add-on, pairs with any tier)
      (If jsdelivr ever fails, `raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt` is the direct source.)
    - **DNS rewrites:** `node1.homelab` → `NODE1_IP`, `node2.homelab` → `NODE2_IP` (values from `.env`) — gives the LAN friendly names; the IPs stay the source of truth for bootstrap/Ansible.
-   - Then **export `AdGuardHome.yaml`** (Settings → export) and import it on Node 2's instance so both serve identical answers.
+   - Then **export `AdGuardHome.yaml`** (Settings → export) and import it on Node 2's instance so both serve identical answers — or deploy `config/adguard/AdGuardHome.yaml` directly (adjust `bind_port` to 3001 and set a fresh password hash).
    - On the router set DHCP DNS to **Node 1 (primary) + Node 2 (secondary)**; keep the router's own upstream DNS as fallback so DNS survives both nodes.
 2. **NPM** → http://node1:81 — default admin `admin@example.com` / `changeme` (change immediately). Use it for friendly hostnames + Let's Encrypt TLS on Node 1 apps.
 3. **Home Assistant** → http://node1:8123 — onboarding wizard.

@@ -1,0 +1,127 @@
+# AdGuardHome.yaml — template for the homelab DNS instances.
+#
+# Node 1 (primary) uses web port 3000; Node 2 (secondary) uses ADGUARD_WEB_PORT
+# (default 3001) — change `bind_port` accordingly before importing there.
+#
+# Deploy on a fresh instance:
+#   1. Copy to the conf dir:  /opt/docker/appdata/adguardhome/conf/AdGuardHome.yaml
+#   2. Replace the password hash below (bcrypt) — generate with:
+#        docker run --rm httpd:alpine htpasswd -nbB admin 'YOUR_PASSWORD' | tr -d ':\n'
+#      (the $2y$ hash AdGuard accepts)
+#   3. docker compose up -d adguard   (or the dns.yml service on Node 2)
+#
+# Alternatively skip this file entirely and run the setup wizard — it generates
+# an equivalent config. This file exists so DNS policy is versioned in git.
+
+bind_host: 0.0.0.0
+bind_port: 3000
+users:
+  - name: admin
+    password: $2y$10$REPLACE_WITH_BCRYPT_HASH_FROM_HTPASSWD
+    groups:
+      - '*'
+auth_attempts: 5
+block_auth_min: 15
+http_proxy: ""
+language: ""
+theme: auto
+dns:
+  bind_hosts: []
+  port: 53
+  anonymize_client_ip: false
+  ratelimit: 20
+  ratelimit_subnet_len_ipv4: 24
+  ratelimit_subnet_len_ipv6: 56
+  ratelimit_whitelist: []
+  refuse_any: true
+  upstream_dns:
+    - tls://1.1.1.1
+    - tls://8.8.8.8
+    - https://dns.cloudflare.com/dns-query
+  upstream_dns_file: ""
+  bootstrap_dns:
+    - 1.1.1.1
+  upstream_mode: parallel
+  fastest_timeout: 1s
+  allowed_clients: []
+  disallowed_clients: []
+  blocked_hosts: []
+  trusted_proxies:
+    - 127.0.0.0/8
+    - ::1/128
+  cache_size: 4194304
+  cache_ttl_min: 0
+  cache_ttl_max: 0
+  cache_optimistic: false
+  bogus_nxdomain: []
+  aaaa_disabled: false
+  enable_dnssec: false
+  edns_client_subnet:
+    enabled: false
+    use_custom: false
+    custom_ip: ""
+    subnet_ipv4: 24
+    subnet_ipv6: 56
+    cache_size: 16
+  max_goroutines: 300
+  handle_ddr: true
+  ipset: []
+  ipset_file: ""
+tls:
+  enabled: false
+  server_name: ""
+  force_https: false
+  port_https: 443
+  port_dns_over_tls: 853
+  port_dns_over_quic: 853
+  port_dnscrypt: 0
+  dnscrypt_config_file: ""
+  allow_unencrypted_doh: false
+  certificate_chain: ""
+  private_key: ""
+  certificate_path: ""
+  private_key_path: ""
+querylog:
+  dir_path: ""
+  ignored: []
+  interval: 2160h
+  size_memory: 1000
+  enabled: true
+  file_enabled: true
+statistics:
+  dir_path: ""
+  ignored: []
+  interval: 24h
+  enabled: true
+filters:
+  - enabled: true
+    url: https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt
+    name: HaGeZi's Pro blocklist
+    id: 1
+  - enabled: true
+    url: https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/tif.txt
+    name: HaGeZi's Threat Intelligence Feeds
+    id: 2
+whitelist: []
+filtering:
+  blocking_ipv4: ""
+  blocking_ipv6: ""
+  blocked_response_ttl: 10
+  filtering_enabled: true
+  rewrites:
+    - domain: node1.homelab
+      answer: 192.168.1.60
+    - domain: node2.homelab
+      answer: 192.168.1.61
+  safe_search:
+    enabled: false
+    bing: true
+    duckduckgo: true
+    ecosia: true
+    google: true
+    pixabay: true
+    yandex: true
+    youtube: true
+  protection_disabled_until: null
+  safe_fs_patterns:
+    - /opt/adguardhome/work/userfilters/*

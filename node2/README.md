@@ -105,11 +105,11 @@ All drafts in [`compose/`](compose/). Run from `node2/` with `docker compose --e
 
 **Omada** — host networking is mandatory or APs/switches can't be adopted (L2 broadcasts don't cross bridge networks). MongoDB 8 inside needs AVX — fine here, impossible on Node 1. Static IP on the router; back up the controller's auto-backup file to `/srv/shares`.
 
-**Monitoring** — VictoriaMetrics scrapes: node-exporter (both nodes, incl. SMART attrs + temps via `--collector.smartmon`), cAdvisor, itself. Alloy ships Docker/system logs → Loki (retention capped at 14 days in `config/loki/loki.yaml`). Uptime Kuma on Node 1 is the alert path — it keeps working when Node 2 doesn't.
+**Monitoring** — VictoriaMetrics scrapes: node-exporter (both nodes), cAdvisor, itself. Drive health is covered by host `smartd` + `hw-alert.sh` (Ansible `hardware_monitor` role), not node-exporter (its `smartmon` collector was removed upstream in v1.9). Alloy ships Docker/system logs → Loki (retention capped at 14 days in `config/loki/loki.yaml`). Uptime Kuma on Node 1 is the alert path — it keeps working when Node 2 doesn't.
 
 **Alerting** — three channels, pick per severity: (1) **Uptime Kuma** for up/down + notifications (built-in Telegram/Discord types); (2) **Grafana alert rules** for metric thresholds — disk %, RAM, temps, SMART errors, scrape-target-down — contact points support Telegram and Discord natively; (3) **smartd on each host** (Ansible `hardware_monitor` role) for drive hardware faults → `hw-alert.sh` → Telegram/Discord via `/etc/homelab-alert.env`. **History** lives in VictoriaMetrics (6-month retention) — graph anything in Grafana.
 
-**Secondary DNS** — `compose/dns.yml` runs a second AdGuard Home so clients fail over if Node 1's instance is down. AdGuard has no replication: configure Node 1, export `AdGuardHome.yaml`, import on Node 2. Admin UI is on `ADGUARD_WEB_PORT` (default 3001 — 3000 is Grafana here).
+**Secondary DNS** — `compose/dns.yml` runs a second AdGuard Home so clients fail over if Node 1's instance is down. AdGuard has no replication: either import Node 1's exported `AdGuardHome.yaml`, or deploy the committed template `node1/config/adguard/AdGuardHome.yaml` (set `bind_port` to `ADGUARD_WEB_PORT`, generate a fresh bcrypt password hash — instructions in the file header). Admin UI is on `ADGUARD_WEB_PORT` (default 3001 — 3000 is Grafana here).
 
 ## Backup
 
