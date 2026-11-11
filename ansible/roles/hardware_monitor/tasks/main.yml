@@ -1,0 +1,47 @@
+---
+# Host-level hardware monitoring on every node:
+# smartmontools (smartd → SMART alerts) + lm-sensors (sensors CLI).
+# Alert delivery via scripts/hw-alert.sh → Telegram/Discord.
+# node-exporter exposes the same data as metrics (smartmon collector)
+# once smartmontools is present.
+
+- name: Install SMART + sensor packages
+  ansible.builtin.apt:
+    name:
+      - smartmontools
+      - lm-sensors
+    state: present
+    update_cache: true
+
+- name: Deploy smartd.conf
+  ansible.builtin.copy:
+    src: smartd.conf
+    dest: /etc/smartd.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart smartmontools
+
+- name: Deploy hw-alert.sh dispatcher
+  ansible.builtin.copy:
+    src: "{{ repo_dir }}/scripts/hw-alert.sh"
+    dest: /usr/local/sbin/hw-alert.sh
+    remote_src: yes
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy alert targets file (only if missing — never overwrite)
+  ansible.builtin.copy:
+    src: homelab-alert.env
+    dest: /etc/homelab-alert.env
+    force: no
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Enable and start smartmontools
+  ansible.builtin.systemd:
+    name: smartmontools
+    enabled: true
+    state: started

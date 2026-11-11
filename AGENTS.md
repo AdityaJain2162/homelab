@@ -36,7 +36,7 @@ Full detail in `docs/network.md` — the essentials:
 | `node1/` | Live stack: `docker-compose.yml`, `.env.example`, `config/mosquitto/`, `scripts/bootstrap.sh`, README |
 | `node2/` | Drafts: `compose/{dns,frigate,immich,media,monitoring,omada}.yml`, `config/`, `.env.example`, ZFS docs, `purchasing.md` |
 | `ansible/` | Provisioning: `inventory.ini`, `site.yml`, `group_vars/all.yml`, roles `docker_host`, `homelab_repo`, `node_deploy`, `node1_stack`, `node2_stack` |
-| `scripts/` | `update.sh` (manual compose pull/up), `pull-deploy.sh` (git pull + compose up; runs on-node via systemd timer every 6h) |
+| `scripts/` | `update.sh` (manual compose pull/up), `pull-deploy.sh` (git pull + compose up; runs on-node via systemd timer every 6h), `hw-alert.sh` (smartd → Telegram/Discord) |
 | `docs/` | `network.md` (PPPoE/VLAN/firewall/mermaid), `master-plan-v2-reference.md` |
 | `.github/workflows/ci.yml` | compose config validation, yamllint, shellcheck, trivy secret scan |
 

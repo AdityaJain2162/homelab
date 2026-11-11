@@ -83,5 +83,6 @@ services:
     pid: host
     command:
       - '--path.rootfs=/host'
+      - '--collector.smartmon'   # SMART attrs/temps — needs smartmontools on host (ansible: hardware_monitor role)
     volumes:
       - '/:/host:ro,rslave'

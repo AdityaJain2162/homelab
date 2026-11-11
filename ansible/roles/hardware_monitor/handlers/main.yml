@@ -1,0 +1,5 @@
+---
+- name: restart smartmontools
+  ansible.builtin.systemd:
+    name: smartmontools
+    state: restarted

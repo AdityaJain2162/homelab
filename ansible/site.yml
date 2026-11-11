@@ -10,6 +10,7 @@
     - docker_host
     - homelab_repo
     - node_deploy
+    - hardware_monitor
   vars:
     # inventory_hostname is node1/node2 — matches scripts/pull-deploy.sh's argument
     deploy_stack: "{{ inventory_hostname }}"

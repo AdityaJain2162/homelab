@@ -63,6 +63,8 @@ Give Node 1 a **static IP or DHCP reservation** on the router — everything poi
 | Zigbee2MQTT | *(commented out)* | 8099 | Enable when the USB dongle arrives |
 | Asterisk PBX | *(planned — commented out)* | 5060 + RTP | SIP intercom + trunk — see [`docs/voice.md`](../docs/voice.md) |
 
+Host-level (installed by the Ansible `hardware_monitor` role, not compose): **smartmontools/smartd** watches all drives — short self-test Sun 02:00, long monthly — and alerts via `scripts/hw-alert.sh` to Telegram/Discord (targets in `/etc/homelab-alert.env`). **node-exporter** exposes SMART attributes + temps as metrics for Grafana history/alerting on Node 2.
+
 ## Deploy
 
 **Automated (recommended) — Ansible:**

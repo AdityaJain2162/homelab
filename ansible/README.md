@@ -50,6 +50,7 @@ GitHub-hosted CI can't reach LAN nodes, so deploy automation lives on the nodes 
 | `docker_host` | all nodes | base packages, Docker apt repo + Engine + Compose plugin, docker group, 500 MB journal cap |
 | `homelab_repo` | all nodes | clones repo to `/opt/homelab`, creates `.env` from `.env.example` **only if missing** (`force: no` — real secrets are never overwritten) |
 | `node_deploy` | all nodes | installs `homelab-deploy.timer` (every 6h, randomized delay) |
+| `hardware_monitor` | all nodes | smartmontools + lm-sensors, smartd self-tests, `hw-alert.sh` → Telegram/Discord via `/etc/homelab-alert.env` |
 | `node1_stack` | node1 | appdata dirs (uid 1000), Mosquitto config + passwordfile, `compose pull && up -d` |
 | `node2_stack` | node2 | appdata dirs for all planned stacks — no compose up (drafts) |
 
