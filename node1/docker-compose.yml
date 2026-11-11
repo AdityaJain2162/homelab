@@ -121,8 +121,9 @@ services:
     command:
       - '--path.rootfs=/host'
       # NOTE: --collector.smartmon was removed upstream in node-exporter v1.9.
-      # SMART metrics come via smartd + hw-alert.sh for now; revisit with
-      # Netdata/Beszel or a textfile collector when Node 2 monitoring lands.
+      # SMART metrics come via scripts/smart-textfile.py + systemd timer
+      # writing .prom files here (host path /var/lib/node-exporter).
+      - '--collector.textfile.directory=/host/var/lib/node-exporter'
     volumes:
       - '/:/host:ro,rslave'
 

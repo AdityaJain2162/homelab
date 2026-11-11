@@ -76,7 +76,21 @@ Give Node 1 a **static IP or DHCP reservation** on the router — everything poi
 
 **Currently commented out in `docker-compose.yml`:** `npm` (crash-loop, root cause TBD — data preserved), `mosquitto` (needs `config/mosquitto/mosquitto.conf` copied into appdata first), `vault` (needs uid-100 dir fix, then `operator init` — see `docs/vault.md`), `uptime-kuma` (paused).
 
-Host-level (installed by the Ansible `hardware_monitor` role, not compose): **smartmontools/smartd** watches all drives — short self-test Sun 02:00, long monthly — and alerts via `scripts/hw-alert.sh` to Telegram/Discord (targets in `/etc/homelab-alert.env`). **node-exporter** exposes host metrics for Grafana history/alerting on Node 2 (its `smartmon` collector was removed upstream in v1.9 — drive health is covered by smartd + `hw-alert.sh` instead).
+Host-level (installed by the Ansible `hardware_monitor` role, not compose): **smartmontools/smartd** watches all drives — short self-test Sun 02:00, long monthly — and alerts via `scripts/hw-alert.sh` to Telegram/Discord (targets in `/etc/homelab-alert.env`). **node-exporter** exposes host metrics for Grafana history/alerting on Node 2 (its `smartmon` collector was removed upstream in v1.9).
+
+**SMART → Grafana:** node-exporter's `--collector.textfile.directory` reads `.prom` files written by `scripts/smart-textfile.py` (temps, power-on hours, cycles, ATA attrs, NVMe health). Install once:
+
+```bash
+sudo install -m 0755 node1/scripts/smart-textfile.py /usr/local/sbin/smart-textfile.py
+sudo mkdir -p /var/lib/node-exporter
+sudo cp node1/systemd/smart-textfile.{service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now smart-textfile.timer
+sudo systemctl start smart-textfile.service   # run once now
+# then recreate node-exporter to pick up the new flag:
+docker compose up -d --force-recreate node-exporter
+```
+
+Metrics appear in VictoriaMetrics as `node_smart_*{disk="/dev/sda"}` — graph temps/wear in Grafana.
 
 ## Deploy
 

@@ -1,0 +1,7 @@
+[Unit]
+Description=Collect SMART metrics for node-exporter textfile collector
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/smart-textfile.py
