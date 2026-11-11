@@ -57,6 +57,14 @@ if [[ ! -f /etc/systemd/journald.conf.d/size.conf ]]; then
   sudo systemctl restart systemd-journald
 fi
 
+# ---------- 3b. free port 53 for AdGuard (systemd-resolved stub) ----------
+if ! grep -rq 'DNSStubListener=no' /etc/systemd/resolved.conf /etc/systemd/resolved.conf.d/ 2>/dev/null; then
+  info "disabling systemd-resolved stub listener (frees :53 for AdGuard)"
+  sudo mkdir -p /etc/systemd/resolved.conf.d
+  printf '[Resolve]\nDNSStubListener=no\n' | sudo tee /etc/systemd/resolved.conf.d/no-stub.conf >/dev/null
+  sudo systemctl restart systemd-resolved
+fi
+
 # ---------- 4. state dirs (container PUID/PGID = 1000) ----------
 info "creating state dirs under $APPDATA"
 sudo mkdir -p "$APPDATA"/{adguardhome/{work,conf},npm,homeassistant,mosquitto/{config,data,log},uptime-kuma,tailscale}

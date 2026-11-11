@@ -61,3 +61,20 @@
       SystemMaxUse=500M
     mode: "0644"
   notify: restart systemd-journald
+
+- name: Create resolved.conf.d directory
+  ansible.builtin.file:
+    path: /etc/systemd/resolved.conf.d
+    state: directory
+    mode: "0755"
+
+- name: Disable systemd-resolved stub listener
+  # The stub binds 127.0.0.53:53 which blocks AdGuard Home's 0.0.0.0:53 bind.
+  # resolved keeps working — it just stops listening on the stub address.
+  ansible.builtin.copy:
+    dest: /etc/systemd/resolved.conf.d/no-stub.conf
+    content: |
+      [Resolve]
+      DNSStubListener=no
+    mode: "0644"
+  notify: restart systemd-resolved

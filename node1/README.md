@@ -47,6 +47,14 @@ sudo timedatectl set-timezone Asia/Kolkata
 sudo systemctl edit --force --full systemd-journald   # cap journal at ~1 GB (optional)
 ```
 
+**Port 53 gotcha:** Ubuntu's `systemd-resolved` stub listener binds `127.0.0.53:53`, which blocks AdGuard Home's `0.0.0.0:53` bind. Fix before first compose up (bootstrap.sh and the Ansible `docker_host` role do this automatically):
+
+```bash
+sudo mkdir -p /etc/systemd/resolved.conf.d
+printf '[Resolve]\nDNSStubListener=no\n' | sudo tee /etc/systemd/resolved.conf.d/no-stub.conf
+sudo systemctl restart systemd-resolved
+```
+
 Give Node 1 a **static IP or DHCP reservation** on the router — everything points at it.
 
 ## Services
