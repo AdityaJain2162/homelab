@@ -20,4 +20,4 @@ cluster_addr = "https://vault.homelab:8201"
 ui = true
 
 default_lease_ttl = "768h"   # 32 days
-default_max_lease_ttl = "8760h"  # 1 year
+max_lease_ttl     = "8760h"  # 1 year
