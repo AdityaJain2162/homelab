@@ -82,6 +82,7 @@ Network topology (WAN, PPPoE, VLANs, firewall rules): [`docs/network.md`](docs/n
 
 ## Repo layout
 
+- [`AGENTS.md`](AGENTS.md) — agent/operator runbook: golden rules, provisioning steps, manual post-setup checklist
 - [`node1/`](node1/) — the live node: compose stack, env template, bootstrap script, setup guide
 - [`node2/`](node2/) — planned node: buy list specs, drive layout, ZFS commands, compose drafts, [`purchasing.md`](node2/purchasing.md)
 - [`ansible/`](ansible/) — provisioning playbooks (Docker, repo, deploy timer, appdata) — run from your workstation over SSH
