@@ -681,7 +681,7 @@
       },
       "targets": [
         {
-          "expr": "node_hwmon_temp_celsius",
+          "expr": "label_replace(label_replace(node_hwmon_temp_celsius, \"chip\", \"k10temp\", \"chip\", \"pci0000:00_0000:00:18_3\"), \"chip\", \"atk0110-acpi\", \"chip\", \"device:15_atk0110:00\")",
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
           "legendFormat": "{{chip}} {{sensor}}"
@@ -721,7 +721,7 @@
       },
       "targets": [
         {
-          "expr": "node_hwmon_fan_rpm",
+          "expr": "label_replace(node_hwmon_fan_rpm, \"chip\", \"atk0110-acpi\", \"chip\", \"device:15_atk0110:00\")",
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
           "legendFormat": "{{chip}} {{sensor}}"
