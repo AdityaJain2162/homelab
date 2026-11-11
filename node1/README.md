@@ -69,6 +69,7 @@ Give Node 1 a **static IP or DHCP reservation** on the router — everything poi
 | Tailscale | `tailscale/tailscale:v1.104.4` | — | Mesh VPN / remote access |
 | HashiCorp Vault | `hashicorp/vault:2.2.1` | 8200 | Local secrets management — see [`docs/vault.md`](../docs/vault.md) |
 | Node Exporter | `quay.io/prometheus/node-exporter:v1.12.1` | 9100 | Metrics → VictoriaMetrics on Node 2 |
+| Netdata | `netdata/netdata:v2.12.3` | 19999 | Real-time host dashboard (CPU/RAM/disk/temps/fans/SMART/Docker) + alerts |
 | Zigbee2MQTT | *(commented out)* | 8099 | Enable when the USB dongle arrives |
 | Asterisk PBX | *(planned — commented out)* | 5060 + RTP | SIP intercom + trunk — see [`docs/voice.md`](../docs/voice.md) |
 
@@ -98,7 +99,7 @@ cd node1
 cp .env.example .env          # edit TZ etc. if needed
 
 # 1. Create state dirs
-sudo mkdir -p /opt/docker/appdata/{adguardhome/{work,conf},npm,homeassistant,mosquitto/{config,data,log},uptime-kuma,tailscale,vault/{data,tls}}
+sudo mkdir -p /opt/docker/appdata/{adguardhome/{work,conf},npm,homeassistant,mosquitto/{config,data,log},uptime-kuma,tailscale,vault/{data,tls},netdata/{config,lib,cache}}
 sudo chown -R 1000:1000 /opt/docker/appdata   # PUID/PGID=1000; harmless for images that ignore it
 
 # 2. Mosquitto credentials (MQTT user for Zigbee2MQTT + Frigate)
