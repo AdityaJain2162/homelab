@@ -685,6 +685,12 @@
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
           "legendFormat": "{{chip}} {{sensor}}"
+        },
+        {
+          "expr": "node_thermal_zone_temp",
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoria-metrics" },
+          "legendFormat": "acpi {{type}}"
         }
       ]
     },
