@@ -161,6 +161,7 @@ docker compose ps
 3. **Home Assistant** → http://node1:8123 — onboarding wizard.
 4. **Tailscale** → authenticate once:
    `docker logs tailscale` — the container prints an auth URL automatically; open it to join the tailnet. `TS_AUTHKEY` in `.env` skips even that (headless).
+   **Subnet router:** set `LAN_SUBNET=192.168.1.0/24` in `.env` before `up -d` → node advertises the LAN to the tailnet. Then in the Tailscale admin console → *Machines → node1 → Edit route settings* → approve the route, and *DNS → Split DNS* → `homelab` → nameserver `100.67.137.69` (Node 1's tailnet IP). Result: `grafana.homelab` etc. resolve the same on LAN and remotely, and every LAN IP (ER605 UI, Node 2) is reachable over the tailnet.
 5. **Mosquitto** — credentials created above are used by Zigbee2MQTT (here) and Frigate (Node 2 → `mqtt://$NODE1_IP:1883`, value from `.env`).
 
 

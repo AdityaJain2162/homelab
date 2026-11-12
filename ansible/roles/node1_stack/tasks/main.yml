@@ -128,6 +128,15 @@
   become_user: "{{ deploy_user }}"
   changed_when: false
 
+# Persist IPv4 forwarding for the Tailscale subnet router (TS_ROUTES/LAN_SUBNET).
+# Docker enables it at runtime anyway; this keeps it on independent of Docker.
+- name: Enable IPv4 forwarding (Tailscale subnet router)
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    sysctl_file: /etc/sysctl.d/99-ip-forward.conf
+    reload: true
+
 - name: Start Node 1 stack
   ansible.builtin.command: docker compose up -d
   args:

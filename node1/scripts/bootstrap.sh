@@ -65,6 +65,15 @@ if ! grep -rq 'DNSStubListener=no' /etc/systemd/resolved.conf /etc/systemd/resol
   sudo systemctl restart systemd-resolved
 fi
 
+# ---------- 3c. IPv4 forwarding (Tailscale subnet router) ----------
+# Docker enables ip_forward at runtime anyway; persisting keeps the node
+# routing LAN_SUBNET → tailnet even if Docker isn't running yet.
+if [[ ! -f /etc/sysctl.d/99-ip-forward.conf ]]; then
+  info "enabling net.ipv4.ip_forward (Tailscale subnet router)"
+  printf 'net.ipv4.ip_forward=1\n' | sudo tee /etc/sysctl.d/99-ip-forward.conf >/dev/null
+  sudo sysctl -p /etc/sysctl.d/99-ip-forward.conf >/dev/null
+fi
+
 # ---------- 4. state dirs (container PUID/PGID = 1000) ----------
 info "creating state dirs under $APPDATA"
 sudo mkdir -p "$APPDATA"/{adguardhome/{work,conf},npm,homeassistant,mosquitto/{config,data,log},tailscale,victoria-metrics,grafana}
