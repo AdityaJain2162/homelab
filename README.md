@@ -65,7 +65,7 @@ Network topology (WAN, PPPoE, VLANs, firewall rules): [`docs/network.md`](docs/n
 | Service | Node | Notes |
 |---|---|---|
 | AdGuard Home (DNS) | 1 (primary) + 2 (secondary) | Same config on both; router keeps upstream DNS as fallback |
-| Nginx Proxy Manager | 1 | Reverse proxy + TLS for Node 1 apps |
+| Nginx Proxy Manager | 1 | Single reverse proxy for the whole lab — Node 2 services proxied over LAN |
 | Tailscale | 1 (+ Node 2 later) | Remote access / mesh VPN |
 | Home Assistant | 1 | 24/7 automation |
 | Mosquitto (MQTT) | 1 | Used by Zigbee2MQTT here and Frigate on Node 2 |
