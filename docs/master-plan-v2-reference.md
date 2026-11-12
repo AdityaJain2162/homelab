@@ -111,11 +111,12 @@ When Node 2 is off: DNS, Wi-Fi, routing, DHCP, remote access and Home Assistant 
 echo "options zfs zfs_arc_max=6442450944" | sudo tee /etc/modprobe.d/zfs.conf
 sudo update-initramfs -u -k all   # 26.04: verify dracut vs update-initramfs first
 
-# 2. Create the 3-way mirror (unmounted; datasets mount explicitly)
+# 2. Create the RAIDZ1 pool (unmounted; datasets mount explicitly)
+# ~2 TB usable; single-disk redundancy + snapshots + off-node backup (see node2/README.md)
 sudo zpool create -f -o ashift=12 \
   -O compression=lz4 -O atime=off -O xattr=sa -O acltype=posixacl \
   -O mountpoint=none \
-  datapool mirror \
+  datapool raidz1 \
   /dev/disk/by-id/DISK2_ID /dev/disk/by-id/DISK3_ID /dev/disk/by-id/DISK4_ID
 
 # 3. Datasets
@@ -132,7 +133,7 @@ sudo zfs set quota=450G datapool/data
 sudo zfs set refreservation=300G datapool/photos
 ```
 
-Adjust 450G/300G to real needs — starting points for ~930 GB.
+Adjust 450G/300G to real needs — starting points for ~2 TB.
 
 Frigate recording disk (separate, ext4):
 

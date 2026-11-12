@@ -17,7 +17,7 @@ Component targets below. **Budget estimates and the sourcing checklist live in [
 | Cabinet | Circle CC830 (~₹2,500 IndiaMART) | 3× 3.5" + 3× 5.25" bays → needs 5.25"→3.5" bracket for 4th HDD |
 | SSD | 256 GB SATA | OS + Docker + databases + monitoring data |
 | HDD | 1 TB SATA | Frigate recordings (ext4) |
-| HDD | 3× 1 TB SATA | ZFS 3-way mirror (owned, currently spare) |
+| HDD | 3× 1 TB SATA | ZFS RAIDZ1 (owned, currently spare) |
 
 Core budget ₹18.5–22.5k, cap ₹25k.
 
@@ -31,7 +31,7 @@ Same as Node 1: **Ubuntu Server 26.04 LTS**, minimal, ext4 on the whole SSD, no 
 |---|---|---|---|---|
 | 1 | 256 GB SSD | ext4 | `/` | OS, Docker, Postgres, Valkey, SQLite DBs, monitoring data |
 | 2 | 1 TB HDD | ext4 | `/media/frigate/recordings` | Frigate recordings **only** — never NFS/ZFS |
-| 3–5 | 3× 1 TB HDD | ZFS `datapool` | `/data`, `/srv/photos`, `/srv/shares` | Photos, shares, media, torrents (~930 GB usable) |
+| 3–5 | 3× 1 TB HDD | ZFS `datapool` | `/data`, `/srv/photos`, `/srv/shares` | Photos, shares, media, torrents (~2 TB usable) |
 
 ## ZFS layout
 
@@ -44,11 +44,13 @@ The pool is **born on Node 2** — the 3 owned HDDs are installed and the pool c
 echo "options zfs zfs_arc_max=6442450944" | sudo tee /etc/modprobe.d/zfs.conf
 sudo update-initramfs -u -k all        # or: sudo dracut -f --regenerate-all
 
-# 3-way mirror via stable by-id paths (fill in real IDs from ls -l /dev/disk/by-id/)
+# RAIDZ1 via stable by-id paths (fill in real IDs from ls -l /dev/disk/by-id/)
+# Chosen over 3-way mirror: ~2 TB usable vs ~1 TB. Single-disk redundancy is
+# enough because real protection = snapshots + off-node backup (see Backup).
 sudo zpool create -f -o ashift=12 \
   -O compression=lz4 -O atime=off -O xattr=sa -O acltype=posixacl \
   -O mountpoint=none \
-  datapool mirror \
+  datapool raidz1 \
   /dev/disk/by-id/DISK_A /dev/disk/by-id/DISK_B /dev/disk/by-id/DISK_C
 
 # Datasets
@@ -71,7 +73,7 @@ sudo mkdir -p /media/frigate/recordings
 sudo mount -a
 ```
 
-Then `sudo apt install sanoid` for scheduled snapshots of `photos` + `shares`. Ubuntu scrubs monthly by default — consider `zpool scrub` alerts via SMART/smartd.
+Then `sudo apt install sanoid` for scheduled snapshots — hourly for `photos` (Immich changes often), daily for `data` + `shares`, keep 30–90 days. Ubuntu scrubs monthly by default — consider `zpool scrub` alerts via SMART/smartd.
 
 ## Configuration variables (`.env`)
 
@@ -113,11 +115,17 @@ All drafts in [`compose/`](compose/). Run from `node2/` with `docker compose --e
 
 ## Backup
 
-Mirror ≠ backup. Minimum: external USB HDD, weekly copy of `datapool/photos` + `datapool/shares` (rsync or zfs send). Better: rclone encrypted offsite for photos. Torrents/media/CCTV are not backed up. Test a restore once.
+Pool redundancy ≠ backup. The layers, in order of what they protect against:
+
+1. **RAIDZ1** — survives one disk failure only.
+2. **ZFS snapshots (sanoid)** — survive deletion/corruption/ransomware *on the same pool*; free, keep 30–90 days.
+3. **Off-node copy** — the only layer that survives node death, theft, or fire. Minimum: external USB HDD on Node 2, nightly `restic`/`duplicacy` of `datapool/photos` + `datapool/shares` + Immich Postgres dump. Better: rclone/restic encrypted offsite (B2 ~$6/TB/mo) for photos only. Torrents/media/CCTV are not backed up — they're replaceable.
+
+Test a restore once — an untested backup is a rumor.
 
 ## Open questions (carried from master plan)
 
 - Camera count/resolution → Frigate disk size (1 TB vs 2 TB)
-- Photo library size → whether ~930 GB pool is enough
+- Photo library size → whether ~2 TB pool is enough (very likely yes)
 - Zigbee dongle model → Node 1
 - Backup route → external only, or cloud too
