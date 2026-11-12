@@ -19,6 +19,8 @@ services:
     container_name: npm
     restart: unless-stopped
     network_mode: host    # binds :80/:443/:81 directly — no NAT per request
+    cap_add:
+      - NET_BIND_SERVICE  # PUID=1000 runs nginx unprivileged — needed for :80/:443
     volumes:
       - /opt/docker/appdata/npm:/data
       - /opt/docker/appdata/npm/letsencrypt:/etc/letsencrypt   # REQUIRED — NPM exits without it
