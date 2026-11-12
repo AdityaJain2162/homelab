@@ -83,6 +83,8 @@ Give Node 1 a **static IP or DHCP reservation** on the router — everything poi
 
 Host-level (installed by the Ansible `hardware_monitor` role, not compose): **smartmontools/smartd** watches all drives — short self-test Sun 02:00, long monthly — and alerts via `scripts/hw-alert.sh` to Telegram/Discord (targets in `/etc/homelab-alert.env`). **node-exporter** exposes host metrics for Grafana history/alerting on Node 2 (its `smartmon` collector was removed upstream in v1.9).
 
+**NPM proxy hosts are git-managed** — the desired list lives in `scripts/npm-sync.py` (domain → forward host/port, IPs from `.env`). After creating an API token (NPM UI → User → Tokens) and setting `NPM_API_TOKEN` in `.env`, run `python3 scripts/npm-sync.py` to converge NPM to the list — safe to re-run, it creates missing hosts and updates drifted ones.
+
 **SMART → Grafana:** node-exporter's `--collector.textfile.directory` reads `.prom` files written by `scripts/smart-textfile.py` (temps, power-on hours, cycles, ATA attrs, NVMe health). Install once:
 
 ```bash
