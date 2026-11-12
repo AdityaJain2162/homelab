@@ -18,10 +18,7 @@ services:
     image: jc21/nginx-proxy-manager:2.16.0
     container_name: npm
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "81:81"        # admin UI
+    network_mode: host    # binds :80/:443/:81 directly — no NAT per request
     volumes:
       - /opt/docker/appdata/npm:/data
     environment:
@@ -46,9 +43,7 @@ services:
   #   image: eclipse-mosquitto:2.1.2-alpine
   #   container_name: mosquitto
   #   restart: unless-stopped
-  #   ports:
-  #     - "1883:1883"    # MQTT — Zigbee2MQTT here, Frigate on Node 2
-  #     - "9001:9001"    # MQTT over WebSockets
+  #   network_mode: host    # binds :1883/:9001 directly
   #   volumes:
   #     - /opt/docker/appdata/mosquitto/config:/mosquitto/config
   #     - /opt/docker/appdata/mosquitto/data:/mosquitto/data
@@ -61,8 +56,7 @@ services:
   #   image: louislam/uptime-kuma:2.5.9    # NB: :latest still points at v1 — keep pinned
   #   container_name: uptime-kuma
   #   restart: unless-stopped
-  #   ports:
-  #     - "3001:3001"
+  #   network_mode: host    # binds :3001 directly
   #   volumes:
   #     - /opt/docker/appdata/uptime-kuma:/app/data
   #   environment:
@@ -96,8 +90,7 @@ services:
   #   image: hashicorp/vault:2.2.1
   #   container_name: vault
   #   restart: unless-stopped
-  #   ports:
-  #     - "8200:8200"    # API + UI (TLS). TODO: restrict to VLAN 99 / tailnet at ER605.
+  #   network_mode: host    # binds :8200 directly (TLS)
   #   cap_add:
   #     - IPC_LOCK      # mlock — required for prod mode
   #   volumes:
@@ -131,10 +124,7 @@ services:
     image: victoriametrics/victoria-metrics:v1.155.0
     container_name: victoria-metrics
     restart: unless-stopped
-    ports:
-      - "8428:8428"    # Prometheus-compatible storage + query API + UI
-    extra_hosts:
-      - "host.docker.internal:host-gateway"   # reach host-network svcs (:9100, :19999)
+    network_mode: host    # binds :8428 directly
     volumes:
       - /opt/docker/appdata/victoria-metrics:/storage
       - ./config/vm:/etc/vm:ro
@@ -147,8 +137,7 @@ services:
     image: ghcr.io/google/cadvisor:v0.60.6
     container_name: cadvisor
     restart: unless-stopped
-    ports:
-      - "8080:8080"    # per-container metrics UI — VM scrapes via bridge network
+    network_mode: host    # binds :8080 directly
     privileged: true   # cAdvisor needs host cgroup/device access for full metrics
     devices:
       - /dev/kmsg
@@ -168,10 +157,7 @@ services:
     image: prom/blackbox-exporter:v0.29.1
     container_name: blackbox
     restart: unless-stopped
-    ports:
-      - "9115:9115"    # prober API — VM scrapes via bridge network
-    extra_hosts:
-      - "host.docker.internal:host-gateway"   # probe host-network services (HA :8123)
+    network_mode: host    # binds :9115 directly
     volumes:
       - ./config/blackbox:/etc/blackbox_exporter:ro
     command:
@@ -181,14 +167,14 @@ services:
     image: grafana/grafana:13.2.5
     container_name: grafana
     restart: unless-stopped
-    ports:
-      - "3002:3000"    # admin UI — 3000 is AdGuard, 3001 was Kuma
+    network_mode: host    # binds GF_SERVER_HTTP_PORT directly
     volumes:
       - /opt/docker/appdata/grafana:/var/lib/grafana
       - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./config/grafana/dashboards:/etc/grafana/dashboards:ro
     environment:
       - TZ=${TZ}
+      - GF_SERVER_HTTP_PORT=3002    # 3000 is AdGuard UI, 3001 is Kuma — ports: can't remap on host net
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
       - GF_USERS_ALLOW_SIGN_UP=false
@@ -226,10 +212,11 @@ services:
   #     - /opt/docker/appdata/zigbee2mqtt:/app/data
   #     - /run/udev:/run/udev:ro
   #   ports:
-  #     - "8099:8080"    # frontend
+  #     - "8099:8080"    # frontend — stays bridge: :8080 is cAdvisor on host net
   #   environment:
   #     - TZ=${TZ}
-  #     - ZIGBEE2MQTT_CONFIG_MQTT_SERVER=mqtt://mosquitto:1883
+  #     # Mosquitto is host-networked → reach it by host IP, not container name
+  #     - ZIGBEE2MQTT_CONFIG_MQTT_SERVER=mqtt://${NODE1_IP}:1883
   #     - ZIGBEE2MQTT_CONFIG_MQTT_USER=${MQTT_USER}
   #     - ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD=${MQTT_PASSWORD}
 

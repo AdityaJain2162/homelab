@@ -1,6 +1,5 @@
 # VictoriaMetrics scrape config — node1/docker-compose.yml mounts this at /etc/vm.
-# Targets use host.docker.internal (extra_hosts → host-gateway) since node-exporter
-# runs with network_mode: host.
+# Everything runs network_mode: host → all targets are localhost:<port>.
 
 global:
   scrape_interval: 15s
@@ -9,7 +8,7 @@ scrape_configs:
   # node-exporter :9100 — CPU/RAM/disk/network/load/fs + hwmon temps/fans
   - job_name: node1
     static_configs:
-      - targets: ['host.docker.internal:9100']
+      - targets: ['localhost:9100']
         labels:
           instance: node1
 
@@ -17,7 +16,7 @@ scrape_configs:
   - job_name: cadvisor
     scrape_interval: 30s
     static_configs:
-      - targets: ['cadvisor:8080']
+      - targets: ['localhost:8080']
         labels:
           instance: node1
 
@@ -28,14 +27,14 @@ scrape_configs:
       module: [http_ok]
     static_configs:
       - targets:
-          - host.docker.internal:3000   # AdGuard admin UI (host network)
-          - grafana:3000                # Grafana (host publishes :3002)
-          - http://victoria-metrics:8428/vmui/   # VM UI — probe /vmui/ path, root / is unreliable
-          - host.docker.internal:8123   # Home Assistant (host network)
+          - localhost:3000              # AdGuard admin UI
+          - localhost:3002              # Grafana (GF_SERVER_HTTP_PORT)
+          - http://localhost:8428/vmui/ # VM UI — probe /vmui/ path, root / is unreliable
+          - localhost:8123              # Home Assistant
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: blackbox:9115
+        replacement: localhost:9115
