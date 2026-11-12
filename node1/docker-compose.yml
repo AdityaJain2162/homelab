@@ -18,25 +18,28 @@ services:
     image: jc21/nginx-proxy-manager:2.16.0
     container_name: npm
     restart: unless-stopped
-    network_mode: host    # binds :80/:443/:81 directly — no NAT per request
-    cap_add:
-      - NET_BIND_SERVICE
+    ports:
+      - "80:80"
+      - "443:443"
+      - "81:81"
     volumes:
       - /opt/docker/appdata/npm:/data
       - /opt/docker/appdata/npm/letsencrypt:/etc/letsencrypt   # REQUIRED — NPM exits without it
     environment:
       - TZ=${TZ}
-      # NPM runs as root (PUID=0): its nginx must bind :80/:443 and uid-1000
-      # can't hold low ports — cap_add/sysctls don't survive its s6 setuid.
+      # NPM runs as root: its nginx binds :80/:443 inside the container and
+      # uid-1000 can't hold low ports — cap_add/sysctls don't survive s6 setuid.
       - PUID=0
       - PGID=0
-      - PORT=${NPM_BACKEND_PORT:-3003}    # internal backend API — :3000 is AdGuard on host net
 
   homeassistant:
     image: ghcr.io/home-assistant/home-assistant:2026.11.1
     container_name: homeassistant
     restart: unless-stopped
-    network_mode: host    # required for mDNS/SSDP device discovery
+    ports:
+      - "8123:8123"
+    # NOTE: bridge mode limits mDNS/SSDP auto-discovery. If device discovery
+    # matters, switch back to network_mode: host — :8123 doesn't collide.
     volumes:
       - /opt/docker/appdata/homeassistant:/config
       - /etc/localtime:/etc/localtime:ro
@@ -49,7 +52,9 @@ services:
   #   image: eclipse-mosquitto:2.1.2-alpine
   #   container_name: mosquitto
   #   restart: unless-stopped
-  #   network_mode: host    # binds :1883/:9001 directly
+  #   ports:
+  #     - "1883:1883"
+  #     - "9001:9001"
   #   volumes:
   #     - /opt/docker/appdata/mosquitto/config:/mosquitto/config
   #     - /opt/docker/appdata/mosquitto/data:/mosquitto/data
@@ -62,7 +67,8 @@ services:
   #   image: louislam/uptime-kuma:2.5.9    # NB: :latest still points at v1 — keep pinned
   #   container_name: uptime-kuma
   #   restart: unless-stopped
-  #   network_mode: host    # binds :3001 directly
+  #   ports:
+  #     - "3001:3001"
   #   volumes:
   #     - /opt/docker/appdata/uptime-kuma:/app/data
   #   environment:
@@ -96,7 +102,8 @@ services:
   #   image: hashicorp/vault:2.2.1
   #   container_name: vault
   #   restart: unless-stopped
-  #   network_mode: host    # binds :8200 directly (TLS)
+  #   ports:
+  #     - "8200:8200"
   #   cap_add:
   #     - IPC_LOCK      # mlock — required for prod mode
   #   volumes:
@@ -115,11 +122,11 @@ services:
     image: quay.io/prometheus/node-exporter:v1.12.1
     container_name: node-exporter
     restart: unless-stopped
-    network_mode: host    # exposes :9100 on the LAN for VictoriaMetrics on Node 2
+    ports:
+      - "${NODE_EXPORTER_PORT:-9100}:9100"   # published host port — LAN + Node 2 scrape this
     pid: host
     command:
       - '--path.rootfs=/host'
-      - '--web.listen-address=:${NODE_EXPORTER_PORT:-9100}'
       # NOTE: --collector.smartmon was removed upstream in node-exporter v1.9.
       # SMART metrics come via scripts/smart-textfile.py + systemd timer
       # writing .prom files here (host path /var/lib/node-exporter).
@@ -131,13 +138,14 @@ services:
     image: victoriametrics/victoria-metrics:v1.155.0
     container_name: victoria-metrics
     restart: unless-stopped
-    network_mode: host    # binds :8428 directly
+    ports:
+      - "${VICTORIAMETRICS_PORT:-8428}:8428"
     volumes:
       - /opt/docker/appdata/victoria-metrics:/storage
       - ./config/vm:/etc/vm:ro
     command:
       - '-retentionPeriod=3'          # months — 3-month metric retention
-      - '-httpListenAddr=:${VICTORIAMETRICS_PORT:-8428}'
+      - '-httpListenAddr=:8428'
       - '-promscrape.config=/etc/vm/scrape.yml'
       - '-storageDataPath=/storage'
 
@@ -145,7 +153,8 @@ services:
     image: ghcr.io/google/cadvisor:v0.60.6
     container_name: cadvisor
     restart: unless-stopped
-    network_mode: host    # binds :8080 directly
+    ports:
+      - "${CADVISOR_PORT:-8080}:8080"
     privileged: true   # cAdvisor needs host cgroup/device access for full metrics
     devices:
       - /dev/kmsg
@@ -156,7 +165,6 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
     command:
-      - '--port=${CADVISOR_PORT:-8080}'
       # Athlon II is weak — defaults (10s housekeeping, all metric sets) eat CPU.
       - '--housekeeping_interval=30s'   # was 10s — matches our 30s scrape interval
       - '--docker_only=true'            # skip raw cgroup stats, docker containers only
@@ -166,25 +174,27 @@ services:
     image: prom/blackbox-exporter:v0.29.1
     container_name: blackbox
     restart: unless-stopped
-    network_mode: host    # binds :9115 directly
+    ports:
+      - "${BLACKBOX_PORT:-9115}:9115"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # reach host-networked AdGuard for probes
     volumes:
       - ./config/blackbox:/etc/blackbox_exporter:ro
     command:
-      - '--web.listen-address=:${BLACKBOX_PORT:-9115}'
       - '--config.file=/etc/blackbox_exporter/blackbox.yml'
 
   grafana:
     image: grafana/grafana:13.2.5
     container_name: grafana
     restart: unless-stopped
-    network_mode: host    # binds GF_SERVER_HTTP_PORT directly
+    ports:
+      - "${GRAFANA_PORT:-3002}:3000"    # internal :3000; host :3000 is AdGuard, :3001 is Kuma (parked)
     volumes:
       - /opt/docker/appdata/grafana:/var/lib/grafana
       - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./config/grafana/dashboards:/etc/grafana/dashboards:ro
     environment:
       - TZ=${TZ}
-      - GF_SERVER_HTTP_PORT=${GRAFANA_PORT:-3002}    # 3000 is AdGuard UI, 3001 is Kuma — ports: can't remap on host net
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
       - GF_USERS_ALLOW_SIGN_UP=false
@@ -202,6 +212,8 @@ services:
   #   environment:
   #     - LOKI_PUSH_URL=http://${NODE2_IP}:3100/loki/api/v1/push
   #     - TZ=${TZ}
+  #   ports:
+  #     - "12345:12345"               # Alloy UI
   #   volumes:
   #     - ./config/alloy/config.alloy:/etc/alloy/config.alloy:ro
   #     - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -222,10 +234,10 @@ services:
   #     - /opt/docker/appdata/zigbee2mqtt:/app/data
   #     - /run/udev:/run/udev:ro
   #   ports:
-  #     - "8099:8080"    # frontend — stays bridge: :8080 is cAdvisor on host net
+  #     - "8099:8080"    # frontend — host :8099 → container :8080; no conflict
   #   environment:
   #     - TZ=${TZ}
-  #     # Mosquitto is host-networked → reach it by host IP, not container name
+  #     # Mosquitto publishes :1883 on the host → reach it via NODE1_IP
   #     - ZIGBEE2MQTT_CONFIG_MQTT_SERVER=mqtt://${NODE1_IP}:1883
   #     - ZIGBEE2MQTT_CONFIG_MQTT_USER=${MQTT_USER}
   #     - ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD=${MQTT_PASSWORD}

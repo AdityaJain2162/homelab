@@ -88,7 +88,7 @@ Then `sudo apt install sanoid` for scheduled snapshots — hourly for `photos` (
 
 All drafts in [`compose/`](compose/). Run from `node2/` with `docker compose --env-file .env -f compose/<file>.yml up -d`.
 
-**Networking:** the infra stack (`dns`, `monitoring`) uses `network_mode: host` like Node 1 — ports bind directly, env-driven via `.env`. App stacks (`frigate`, `immich`, `media`, `omada`) stay on bridge networking — port remapping and isolation matter more there.
+**Networking:** bridge networking + published ports everywhere — same pattern as Node 1. Only `dns` (AdGuard `:53` latency) and `omada` (L2 adoption requires host net) use `network_mode: host`.
 
 | File | Services | Notes |
 |---|---|---|

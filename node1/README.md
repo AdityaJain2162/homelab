@@ -63,7 +63,7 @@ Give Node 1 a **static IP or DHCP reservation** on the router — everything poi
 |---|---|---|---|
 | AdGuard Home | `adguard/adguardhome:v0.107.80` | 53, 3000 | Network DNS + ad blocking |
 | Nginx Proxy Manager | `jc21/nginx-proxy-manager:2.16.0` | 80, 443, 81 | Reverse proxy + TLS |
-| Home Assistant | `ghcr.io/home-assistant/home-assistant:2026.11.1` | 8123 | Home automation (host network for discovery) |
+| Home Assistant | `ghcr.io/home-assistant/home-assistant:2026.11.1` | 8123 | Home automation |
 | Mosquitto | `eclipse-mosquitto:2.1.2-alpine` | 1883, 9001 | MQTT broker — also used by Frigate on Node 2 |
 | Uptime Kuma | `louislam/uptime-kuma:2.5.9` | 3001 | Uptime monitoring/alerting |
 | Tailscale | `tailscale/tailscale:v1.104.4` | — | Mesh VPN / remote access |
@@ -76,7 +76,7 @@ Give Node 1 a **static IP or DHCP reservation** on the router — everything poi
 | Zigbee2MQTT | *(commented out)* | 8099 | Enable when the USB dongle arrives |
 | Asterisk PBX | *(planned — commented out)* | 5060 + RTP | SIP intercom + trunk — see [`docs/voice.md`](../docs/voice.md) |
 
-**All services run `network_mode: host`** — ports bind directly on the node IP, no NAT/docker-proxy. Compose-controllable ports are env-driven via `.env` (`NODE_EXPORTER_PORT`, `VICTORIAMETRICS_PORT`, `CADVISOR_PORT`, `BLACKBOX_PORT`, `GRAFANA_PORT`, `NPM_BACKEND_PORT`); AdGuard/HA/NPM frontend ports live in their own configs (see `.env.example` notes). Keep `config/vm/scrape.yml` targets in sync — it can't read `.env`.
+**Bridge networking + published ports** — each container gets its own port namespace; `.env` vars (`NODE_EXPORTER_PORT`, `VICTORIAMETRICS_PORT`, `CADVISOR_PORT`, `BLACKBOX_PORT`, `GRAFANA_PORT`) set the *host* side of the mapping while internal ports stay at app defaults. **Exceptions on host networking:** AdGuard (`:53` DNS latency — no NAT per packet), Tailscale and Asterisk when enabled (they genuinely need host netns). Keep `config/vm/scrape.yml` service names in sync if services are renamed.
 
 **Currently commented out in `docker-compose.yml`:** `mosquitto` (needs `config/mosquitto/mosquitto.conf` copied into appdata first), `vault` (needs uid-100 dir fix, then `operator init` — see `docs/vault.md`), `uptime-kuma` (paused), `tailscale` (was restart-looping), `alloy` (log shipper — enable after Node 2's Loki is up), `zigbee2mqtt`, `asterisk`.
 

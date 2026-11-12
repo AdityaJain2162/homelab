@@ -1,6 +1,9 @@
 # VictoriaMetrics scrape config — node1/docker-compose.yml mounts this at /etc/vm.
-# Everything runs network_mode: host → all targets are localhost:<port>.
-# Ports must match node1/.env (NODE_EXPORTER_PORT etc.) — YAML can't read .env.
+# Bridge networking → targets are compose service names on internal ports.
+# AdGuard is the one host-networked service → reached via host.docker.internal
+# (extra_hosts is set on the blackbox service for the probes below).
+# .env port vars only change PUBLISHED host ports — internal ports are fixed,
+# so this file doesn't need to match them.
 
 global:
   scrape_interval: 15s
@@ -9,7 +12,7 @@ scrape_configs:
   # node-exporter :9100 — CPU/RAM/disk/network/load/fs + hwmon temps/fans
   - job_name: node1
     static_configs:
-      - targets: ['localhost:9100']
+      - targets: ['node-exporter:9100']
         labels:
           instance: node1
 
@@ -17,7 +20,7 @@ scrape_configs:
   - job_name: cadvisor
     scrape_interval: 30s
     static_configs:
-      - targets: ['localhost:8080']
+      - targets: ['cadvisor:8080']
         labels:
           instance: node1
 
@@ -28,14 +31,14 @@ scrape_configs:
       module: [http_ok]
     static_configs:
       - targets:
-          - localhost:3000              # AdGuard admin UI
-          - localhost:3002              # Grafana (GF_SERVER_HTTP_PORT)
-          - http://localhost:8428/vmui/ # VM UI — probe /vmui/ path, root / is unreliable
-          - localhost:8123              # Home Assistant
+          - host.docker.internal:3000              # AdGuard admin UI (host-networked)
+          - grafana:3000                          # Grafana UI
+          - http://victoriametrics:8428/vmui/     # VM UI — probe /vmui/ path, root / is unreliable
+          - homeassistant:8123                    # Home Assistant
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: localhost:9115
+        replacement: blackbox:9115

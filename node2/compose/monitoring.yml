@@ -1,6 +1,6 @@
 # DRAFT — Node 2 monitoring stack. Verify image tags at deploy time.
-# Host networking throughout (same pattern as Node 1) — services bind ports
-# directly; keep node2/.env port vars and scrape targets in sync.
+# Bridge networking + published ports (same pattern as Node 1). Env vars set
+# the HOST side of each mapping; internal ports stay at app defaults.
 # Run from node2/: docker compose --env-file .env -f compose/monitoring.yml up -d
 name: node2-monitoring
 
@@ -9,11 +9,12 @@ services:
     image: victoriametrics/victoria-metrics:v1.155.0
     container_name: victoriametrics
     restart: unless-stopped
-    network_mode: host    # binds :8428 directly
+    ports:
+      - "${VICTORIAMETRICS_PORT:-8428}:8428"   # vmui + remote-write endpoint
     command:
       - "-storageDataPath=/storage"
       - "-retentionPeriod=6"        # ~6 months of metrics
-      - "-httpListenAddr=:${VICTORIAMETRICS_PORT:-8428}"
+      - "-httpListenAddr=:8428"
     volumes:
       - /opt/docker/appdata/monitoring/victoriametrics:/storage
 
@@ -21,9 +22,9 @@ services:
     image: grafana/grafana:13.2.5
     container_name: grafana
     restart: unless-stopped
-    network_mode: host    # binds GF_SERVER_HTTP_PORT directly — :3000 here (AdGuard web is :3001)
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"   # Node 2 Grafana owns :3000 — AdGuard web is :3001
     environment:
-      - GF_SERVER_HTTP_PORT=${GRAFANA_PORT:-3000}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in .env}
       - TZ=${TZ}
     volumes:
@@ -34,7 +35,8 @@ services:
     image: grafana/loki:3.7.9
     container_name: loki
     restart: unless-stopped
-    network_mode: host    # binds :3100 per config/loki/loki.yaml
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
     volumes:
       - ../config/loki/loki.yaml:/etc/loki/local-config.yaml:ro
       - /opt/docker/appdata/monitoring/loki:/loki
@@ -43,10 +45,11 @@ services:
     image: grafana/alloy:v1.21.3
     container_name: alloy
     restart: unless-stopped
-    network_mode: host    # binds ALLOY_PORT directly
+    ports:
+      - "${ALLOY_PORT:-12345}:12345"   # Alloy UI
     command:
       - run
-      - --server.http.listen-addr=0.0.0.0:${ALLOY_PORT:-12345}
+      - --server.http.listen-addr=0.0.0.0:12345
       - --storage.path=/var/lib/alloy/data
       - /etc/alloy/config.alloy
     environment:
@@ -64,7 +67,8 @@ services:
     image: ghcr.io/google/cadvisor:v0.60.6
     container_name: cadvisor
     restart: unless-stopped
-    network_mode: host    # binds :8085 — :8080 is qBittorrent on this node
+    ports:
+      - "${CADVISOR_PORT:-8085}:8080"   # host :8080 is qBittorrent (media.yml)
     privileged: true
     devices:
       - /dev/kmsg
@@ -74,18 +78,16 @@ services:
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
-    command:
-      - '--port=${CADVISOR_PORT:-8085}'
 
   node-exporter:
     image: quay.io/prometheus/node-exporter:v1.12.1
     container_name: node-exporter
     restart: unless-stopped
-    network_mode: host
+    ports:
+      - "${NODE_EXPORTER_PORT:-9100}:9100"
     pid: host
     command:
       - '--path.rootfs=/host'
-      - '--web.listen-address=:${NODE_EXPORTER_PORT:-9100}'
       - '--collector.smartmon'   # SMART attrs/temps — needs smartmontools on host (ansible: hardware_monitor role)
     volumes:
       - '/:/host:ro,rslave'
