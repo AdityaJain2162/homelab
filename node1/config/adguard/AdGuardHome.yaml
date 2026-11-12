@@ -116,8 +116,12 @@ filtering:
       answer: 192.168.1.60
     - domain: node2.homelab
       answer: 192.168.1.61
-    # Service names → Node 1 IP: NPM on :80 routes by hostname to the right
-    # backend (local container name, or Node 2 IP:port for remote services).
+    # Wildcard → Node 1: NPM on :80 routes by hostname to the right backend
+    # (local container name, or Node 2 IP:port for remote services). Exact
+    # matches above win — node2.homelab still lands on .61.
+    - domain: "*.homelab"
+      answer: 192.168.1.60
+    # .local alternates — .local is shared with mDNS; prefer .homelab for new names
     - domain: grafana.node1.local
       answer: 192.168.1.60
     - domain: npm.node1.local
