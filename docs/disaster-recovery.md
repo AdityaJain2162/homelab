@@ -8,7 +8,7 @@ What happens when the SSD dies, what you lose, and how to rebuild. Node 1's desi
 |---|---|---|---|
 | Home Assistant config + history | `/opt/docker/appdata/homeassistant` | 🔴 High — automations, dashboards, integrations | HA automatic backups (Settings → System → Backups) |
 | NPM proxy config + certs | `/opt/docker/appdata/npm` | 🟠 Medium | NPM UI → Backup (download JSON); contains password hashes — store offline |
-| Vault secrets | `/opt/docker/appdata/vault/data` | 🟠 Medium | Re-enter secrets, or back up `data/` while unsealed |
+
 | `.env` + `homelab-alert.env` | repo root (gitignored) | 🟠 Medium | Password manager — NOT in git |
 | Tailscale node key | `/opt/docker/appdata/tailscale` | 🟡 Low | Re-auth (`tailscale up`), may need admin approval |
 | Zigbee2MQTT pairings | `/opt/docker/appdata/zigbee2mqtt` | 🟡 Low (future) | Zigbee2MQTT frontend → backup |
@@ -43,7 +43,7 @@ Everything else rebuilds from git — no backup needed.
    - **NPM** — *Admin → Restore* the backup JSON (re-issues certs automatically).
    - **Home Assistant** — *Settings → System → Backups → Restore* the latest backup. Without one: re-onboard and rebuild automations manually — the real cost of skipping step 1 above.
    - **Tailscale** — uncomment service, `docker compose up -d tailscale`, `docker compose exec tailscale tailscale up` → approve in admin console.
-   - **Vault** — `chown 100:100` data/tls, restore `data/` if backed up, else `vault operator init` (see `docs/vault.md`).
+
 7. **Verify** — `dig @192.168.1.100 example.com +short`, `docker compose ps`, Grafana dashboard loads, HA responds on :8123.
 
 ## Hardcoded-IP checklist (when the IP changes)
@@ -53,5 +53,5 @@ Host networking means metrics/probes use `localhost` — immune to IP changes. W
 - `node1/.env` → `NODE1_IP` (and `node2/.env` → `NODE1_IP`, `NODE1_EXPORTER_ADDR`)
 - AdGuard **live** rewrites (`node1.homelab`, `node2.homelab`) — edit in UI or YAML
 - `ansible/inventory.ini` → `ansible_host`
-- `docs/vault.md`, `node1/scripts/vault-tls.sh` (default arg)
+
 - ER605 DHCP reservation + any client-side manual DNS entries

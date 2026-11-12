@@ -41,12 +41,6 @@
         description: Mesh VPN admin console
         # container: tailscale    # uncomment once enabled in compose
 
-    - Vault:
-        icon: vault.png
-        href: https://{{HOMEPAGE_VAR_NODE1_IP}}:8200
-        description: Secrets — parked, self-signed TLS
-        # container: vault        # uncomment once enabled in compose
-
 - Smart Home:
     - Home Assistant:
         icon: homeassistant.png
