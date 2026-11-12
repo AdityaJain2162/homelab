@@ -21,6 +21,10 @@ services:
     network_mode: host    # binds :80/:443/:81 directly — no NAT per request
     cap_add:
       - NET_BIND_SERVICE  # PUID=1000 runs nginx unprivileged — needed for :80/:443
+    sysctls:
+      # host netns → this applies HOST-WIDE: any local process may bind <1024.
+      # Acceptable on a single-purpose homelab node; resets on reboot.
+      - net.ipv4.ip_unprivileged_port_start=0
     volumes:
       - /opt/docker/appdata/npm:/data
       - /opt/docker/appdata/npm/letsencrypt:/etc/letsencrypt   # REQUIRED — NPM exits without it
