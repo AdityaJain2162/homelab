@@ -73,7 +73,7 @@ These need a browser or interactive auth — guide the user through them:
    - DNS rewrites: `node1.homelab` → Node 1 IP, `node2.homelab` → Node 2 IP
    - **Export `AdGuardHome.yaml`** for Node 2's instance (do this BEFORE Node 2 exists is fine — keep the file safe, it contains no secrets but does contain your config)
 2. **NPM** → `:81` — change default admin creds immediately.
-3. **Home Assistant** → `:8123` — onboarding.
+3. **Home Assistant** → `:8123` — onboarding. When fronting it via NPM, HA returns `400 Bad Request` unless `configuration.yaml` has `http:` → `use_x_forwarded_for: true` + `trusted_proxies: [172.16.0.0/12, <LAN subnet>]` — then restart.
 4. **Tailscale** → `docker compose -f node1/docker-compose.yml exec tailscale tailscale up` (or set `TS_AUTHKEY` in `node1/.env`).
 5. **Uptime Kuma** → `:3001` — admin + monitors + a push notification channel.
 6. **Router (ER605)** — DHCP DNS: Node 1 primary, Node 2 secondary (once it exists); inter-VLAN firewall must allow UDP+TCP 53 to **both** node IPs on every user VLAN; keep router upstream DNS as fallback.
