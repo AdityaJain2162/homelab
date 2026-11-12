@@ -53,26 +53,27 @@ Prereq: run Ansible from Linux/macOS/WSL2 (not native Windows), with SSH access 
    ansible-playbook site.yml --limit node1
    ```
 
-   MQTT credentials (otherwise Mosquitto starts with no users — the playbook warns):
+   Credentials as extra-vars (otherwise the playbook warns and skips seeding):
 
    ```bash
    ansible-playbook site.yml --limit node1 \
-     --extra-vars 'mqtt_user=mqtt mqtt_password=CHOSEN_PASSWORD'
+     --extra-vars 'mqtt_user=mqtt mqtt_password=CHOSEN_PASSWORD \
+                   adguard_password=CHOSEN_PASSWORD'
    ```
+
+   - `mqtt_password` → Mosquitto passwordfile (broker starts with no users without it)
+   - `adguard_password` → AdGuardHome.yaml seed — skips the setup wizard entirely
 
    Standalone fallback if Ansible is unavailable: `bash node1/scripts/bootstrap.sh` on the node.
 4. Node 2 later: `ansible-playbook site.yml --limit node2` (dirs only — see Node 2 section).
 
 ## Manual steps Ansible cannot do (Node 1, after provisioning)
 
-These need a browser or interactive auth — guide the user through them:
+Most first-boot config is seeded automatically — see "What bootstrap/Ansible already does" below. What still needs a browser or interactive auth:
 
-1. **AdGuard** → `http://<node1-ip>:3000` — wizard; set web port 3000. Then:
-   - Upstreams: `tls://1.1.1.1`, `tls://8.8.8.8`, `https://dns.cloudflare.com/dns-query` (parallel race, fastest wins). DoT measured ~20 ms on Node 1's no-AES-NI CPU; pure-DoH cold lookups were ~147 ms. A ready-made config is committed at `node1/config/adguard/AdGuardHome.yaml` — usable for fresh installs/Node 2 (fresh bcrypt hash required).
-   - Blocklists: `https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt` and `.../adblock/tif.txt`
-   - DNS rewrites: `node1.homelab` → Node 1 IP, `node2.homelab` → Node 2 IP
-   - **Export `AdGuardHome.yaml`** for Node 2's instance (do this BEFORE Node 2 exists is fine — keep the file safe, it contains no secrets but does contain your config)
-2. **NPM** → `:81` — change default admin creds immediately.
+1. **AdGuard** → `http://<node1-ip>:3000` — if seeded (bootstrap or `adguard_password` extra-var), the wizard is skipped and upstreams/blocklists/rewrites are already live — just log in. If NOT seeded, run the wizard manually: web port 3000, upstreams `tls://1.1.1.1` + `tls://8.8.8.8` + `https://dns.cloudflare.com/dns-query`, blocklists `hagezi pro` + `tif`, rewrites `*.homelab` → Node 1 IP + `node2.homelab` → Node 2 IP.
+   - Later: **export `AdGuardHome.yaml`** for Node 2's secondary instance.
+2. **NPM** → `:81` — change default admin creds immediately, then put them in `node1/.env` as `NPM_USER`/`NPM_PASSWORD` (feeds `npm-sync.py`, which bootstrap/Ansible runs automatically once creds exist).
 3. **Home Assistant** → `:8123` — onboarding. Fronted via NPM, HA returns `400 Bad Request` unless `use_x_forwarded_for: true` + `trusted_proxies` are set. **HA ≥ 2026.x gotcha:** the `http:` yaml block is migrated into `.storage/http` on FIRST boot only (`yaml_migration_done: true`) — later yaml edits are silently ignored. Seed `node1/config/homeassistant/configuration.yaml` into appdata BEFORE first `up` (copy command in that file's header), or fix a running instance by deleting `.storage/http` and restarting to re-migrate.
 4. **Tailscale** → `docker compose -f node1/docker-compose.yml exec tailscale tailscale up` (or set `TS_AUTHKEY` in `node1/.env`).
 5. **Uptime Kuma** → `:3001` — admin + monitors + a push notification channel.

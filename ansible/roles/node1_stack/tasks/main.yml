@@ -23,6 +23,7 @@
 
 - name: Install Mosquitto config
   ansible.builtin.copy:
+    remote_src: true      # src is on the node — repo already checked out there
     src: "{{ repo_dir }}/node1/config/mosquitto/mosquitto.conf"
     dest: "{{ appdata_root }}/mosquitto/config/mosquitto.conf"
     owner: "1000"
@@ -57,6 +58,71 @@
   when: mqtt_password is defined and not mqtt_pwfile.stat.exists
   no_log: true
 
+# HA >= 2026.x migrates the http: yaml block into .storage on first boot —
+# seeding before `compose up` puts trusted_proxies in before migration runs.
+- name: Seed Home Assistant configuration.yaml (first boot only)
+  ansible.builtin.copy:
+    remote_src: true      # src is on the node — repo already checked out there
+    src: "{{ repo_dir }}/node1/config/homeassistant/configuration.yaml"
+    dest: "{{ appdata_root }}/homeassistant/configuration.yaml"
+    owner: "1000"
+    group: "1000"
+    mode: "0644"
+    force: false          # never overwrite a live config
+
+# Seeding AdGuardHome.yaml skips the setup wizard — upstreams, blocklists,
+# and *.homelab rewrites all come up configured. Needs adguard_password.
+- name: Check for existing AdGuard config
+  ansible.builtin.stat:
+    path: "{{ appdata_root }}/adguardhome/conf/AdGuardHome.yaml"
+  register: agh_conf
+
+- name: Warn when AdGuard password is missing
+  ansible.builtin.debug:
+    msg: >-
+      No AdGuardHome.yaml and adguard_password not provided — the web
+      wizard will run on first boot instead. Re-run with:
+      ansible-playbook site.yml --limit node1
+      --extra-vars 'adguard_password=CHOSEN_PASSWORD'
+  when: not agh_conf.stat.exists and adguard_password is not defined
+
+- name: Generate AdGuard bcrypt hash (htpasswd via httpd image)
+  ansible.builtin.command: >-
+    docker run --rm httpd:2.4-alpine htpasswd -nbB admin {{ adguard_password }}
+  register: agh_htpasswd
+  become_user: "{{ deploy_user }}"
+  when: not agh_conf.stat.exists and adguard_password is defined
+  changed_when: false
+  no_log: true
+
+- name: Seed AdGuardHome.yaml (template → conf dir)
+  ansible.builtin.copy:
+    remote_src: true      # src is on the node — repo already checked out there
+    src: "{{ repo_dir }}/node1/config/adguard/AdGuardHome.yaml"
+    dest: "{{ appdata_root }}/adguardhome/conf/AdGuardHome.yaml"
+    owner: "1000"
+    group: "1000"
+    mode: "0644"
+    force: false
+  when: not agh_conf.stat.exists and adguard_password is defined
+  register: agh_seed
+  no_log: true            # will contain the bcrypt hash
+
+- name: Inject password hash + node IPs into seeded AdGuard config
+  ansible.builtin.replace:
+    path: "{{ appdata_root }}/adguardhome/conf/AdGuardHome.yaml"
+    regexp: "{{ item.re }}"
+    replace: "{{ item.r }}"
+  loop:
+    - re: '\$2y\$10\$REPLACE_WITH_BCRYPT_HASH_FROM_HTPASSWD'
+      r: "{{ agh_htpasswd.stdout | regex_replace('^admin:', '') }}"
+    - re: '192\.168\.1\.60'
+      r: "{{ ansible_host }}"
+    - re: '192\.168\.1\.61'
+      r: "{{ node2_ip | default('192.168.1.61') }}"
+  when: agh_seed is changed
+  no_log: true
+
 - name: Pull Node 1 images
   ansible.builtin.command: docker compose pull
   args:
@@ -70,3 +136,13 @@
     chdir: "{{ repo_dir }}/node1"
   become_user: "{{ deploy_user }}"
   changed_when: false   # compose is idempotent; the timer handles drift
+
+# npm-sync reads NPM_USER/NPM_PASSWORD (or NPM_API_TOKEN) from node1/.env —
+# skipped when creds aren't set yet (first boot, admin password not chosen).
+- name: Sync NPM proxy hosts
+  ansible.builtin.command: python3 scripts/npm-sync.py
+  args:
+    chdir: "{{ repo_dir }}/node1"
+  become_user: "{{ deploy_user }}"
+  changed_when: false
+  failed_when: false

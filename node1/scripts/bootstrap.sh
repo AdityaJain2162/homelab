@@ -93,12 +93,48 @@ if [[ ! -f "$MQTT_CONF/passwordfile" ]]; then
   info "mqtt user '$mqtt_user' created — reuse this password for Zigbee2MQTT and Frigate"
 fi
 
+# ---------- 6b. Home Assistant seed config ----------
+# HA >= 2026.x migrates the http: yaml block into .storage on FIRST boot —
+# seeding here means trusted_proxies lands before the migration runs.
+HA_CONF="$APPDATA/homeassistant/configuration.yaml"
+if [[ ! -f "$HA_CONF" ]]; then
+  info "seeding HA configuration.yaml (trusted_proxies for NPM)"
+  sudo cp "$STACK_DIR/config/homeassistant/configuration.yaml" "$HA_CONF"
+  sudo chown 1000:1000 "$HA_CONF"
+fi
+
+# ---------- 6c. AdGuard config (seeding skips the setup wizard) ----------
+# Template ships upstreams, blocklists, and *.homelab rewrites — all that
+# remains is the admin password hash and the node IPs from .env.
+AGH_CONF="$APPDATA/adguardhome/conf/AdGuardHome.yaml"
+if [[ ! -f "$AGH_CONF" ]]; then
+  read -rsp "AdGuard admin password (web UI): " agh_pass; echo
+  info "generating bcrypt hash + seeding AdGuardHome.yaml"
+  agh_hash="$(docker run --rm httpd:2.4-alpine htpasswd -nbB admin "$agh_pass" | tr -d ':\n')"
+  agh_n1="$(awk -F= '/^NODE1_IP=/ {gsub(/["'"'"' ]/,"",$2); print $2; exit}' "$STACK_DIR/.env")"
+  agh_n2="$(awk -F= '/^NODE2_IP=/ {gsub(/["'"'"' ]/,"",$2); print $2; exit}' "$STACK_DIR/.env")"
+  sudo sed -e "s|\\\$2y\\\$10\\\$REPLACE_WITH_BCRYPT_HASH_FROM_HTPASSWD|${agh_hash}|" \
+           -e "s|192.168.1.60|${agh_n1:-192.168.1.60}|g" \
+           -e "s|192.168.1.61|${agh_n2:-192.168.1.61}|g" \
+           "$STACK_DIR/config/adguard/AdGuardHome.yaml" | sudo tee "$AGH_CONF" >/dev/null
+  sudo chown 1000:1000 "$AGH_CONF"
+fi
+
 # ---------- 7. compose ----------
 info "pulling images and starting stack"
 cd "$STACK_DIR"
 docker compose pull
 docker compose up -d
 docker compose ps
+
+# ---------- 7b. NPM proxy hosts (idempotent sync via API) ----------
+if grep -qE '^NPM_(USER|PASSWORD)=' "$STACK_DIR/.env" 2>/dev/null; then
+  info "syncing NPM proxy hosts (scripts/npm-sync.py)"
+  python3 "$STACK_DIR/scripts/npm-sync.py" \
+    || warn "npm-sync failed — run it manually once NPM is reachable on :81"
+else
+  warn "NPM_USER/NPM_PASSWORD not in .env — skipping npm-sync (proxy hosts)"
+fi
 
 # ---------- 8. next steps ----------
 node1_ip="$(grep -E '^NODE1_IP=' "$STACK_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2- | awk '{print $1}' | tr -d "\"'" || true)"
@@ -107,14 +143,18 @@ node1_ip="${node1_ip:-<set NODE1_IP in .env>}"
 cat <<'EOF' | sed "s|<node1-ip>|${node1_ip}|g"
 
 ============================================================
- Bootstrap complete. Next steps:
+ Bootstrap complete. Remaining manual steps:
 
-   AdGuard Home : http://<node1-ip>:3000   (wizard → set web port 3000)
-   Nginx Proxy M.: http://<node1-ip>:81    (default admin: admin@example.com / changeme)
-   Home Assistant: http://<node1-ip>:8123
+   AdGuard Home : http://<node1-ip>:3000   (already configured — login with
+                  the password you just set; rewrites + blocklists are live)
+   Nginx Proxy M.: http://<node1-ip>:81    (default admin: admin@example.com /
+                  changeme — change it; proxy hosts synced by npm-sync.py)
+   Home Assistant: http://<node1-ip>:8123  (onboarding wizard)
+   Homepage     : http://<node1-ip>:3003   (or http://home.homelab once DNS is up)
    Uptime Kuma  : http://<node1-ip>:3001
 
    Tailscale    : docker compose exec tailscale tailscale up
+                  (or set TS_AUTHKEY in .env to skip this)
    Router       : set DHCP DNS → this node's IP (keep router DNS as fallback)
 
    Zigbee2MQTT  : uncomment its block in docker-compose.yml once the dongle arrives
