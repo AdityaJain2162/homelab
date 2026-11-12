@@ -20,18 +20,16 @@ services:
     restart: unless-stopped
     network_mode: host    # binds :80/:443/:81 directly — no NAT per request
     cap_add:
-      - NET_BIND_SERVICE  # PUID=1000 runs nginx unprivileged — needed for :80/:443
-    sysctls:
-      # host netns → this applies HOST-WIDE: any local process may bind <1024.
-      # Acceptable on a single-purpose homelab node; resets on reboot.
-      - net.ipv4.ip_unprivileged_port_start=0
+      - NET_BIND_SERVICE
     volumes:
       - /opt/docker/appdata/npm:/data
       - /opt/docker/appdata/npm/letsencrypt:/etc/letsencrypt   # REQUIRED — NPM exits without it
     environment:
       - TZ=${TZ}
-      - PUID=${PUID}
-      - PGID=${PGID}
+      # NPM runs as root (PUID=0): its nginx must bind :80/:443 and uid-1000
+      # can't hold low ports — cap_add/sysctls don't survive its s6 setuid.
+      - PUID=0
+      - PGID=0
 
   homeassistant:
     image: ghcr.io/home-assistant/home-assistant:2026.11.1
