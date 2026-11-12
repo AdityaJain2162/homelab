@@ -35,7 +35,7 @@ docker compose exec vault vault operator unseal "<UNSEAL_KEY>"
 #    then future unseals:   bash scripts/vault-unseal.sh
 ```
 
-UI: `https://192.168.1.60:8200` (accept the self-signed cert warning) — log in with the root token.
+UI: `https://192.168.1.100:8200` (accept the self-signed cert warning) — log in with the root token.
 
 ## Every restart
 
@@ -90,7 +90,7 @@ Store issued tokens in your password manager — they are the "keys" consumers u
   ansible.builtin.set_fact:
     mqtt_password: "{{ lookup('community.hashi_vault.vault_kv2_get',
         'homelab/node1', 'mqtt_password',
-        vault_addr='https://192.168.1.60:8200',
+        vault_addr='https://192.168.1.100:8200',
         vault_token=lookup('env', 'VAULT_TOKEN'),
         validate_certs=false) }}"
 ```
