@@ -152,7 +152,7 @@ cat <<'EOF' | sed "s|<node1-ip>|${node1_ip}|g"
    Home Assistant: http://<node1-ip>:8123  (onboarding wizard)
    Homepage     : http://<node1-ip>:3003   (or http://home.homelab once DNS is up)
 
-   Tailscale    : docker compose exec tailscale tailscale up
+   Tailscale    : docker logs tailscale → open the auth URL it prints
                   (or set TS_AUTHKEY in .env to skip this)
    Router       : set DHCP DNS → this node's IP (keep router DNS as fallback)
 

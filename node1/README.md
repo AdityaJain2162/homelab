@@ -160,7 +160,7 @@ docker compose ps
 2. **NPM** → http://node1:81 — default admin `admin@example.com` / `changeme` (change immediately). Use it for friendly hostnames + Let's Encrypt TLS on Node 1 apps.
 3. **Home Assistant** → http://node1:8123 — onboarding wizard.
 4. **Tailscale** → authenticate once:
-   `docker compose exec tailscale tailscale up` (prints a login URL), or set `TS_AUTHKEY` in `.env` for headless auth.
+   `docker logs tailscale` — the container prints an auth URL automatically; open it to join the tailnet. `TS_AUTHKEY` in `.env` skips even that (headless).
 5. **Mosquitto** — credentials created above are used by Zigbee2MQTT (here) and Frigate (Node 2 → `mqtt://$NODE1_IP:1883`, value from `.env`).
 
 
