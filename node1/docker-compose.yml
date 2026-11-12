@@ -30,6 +30,7 @@ services:
       # can't hold low ports — cap_add/sysctls don't survive its s6 setuid.
       - PUID=0
       - PGID=0
+      - PORT=3003    # internal backend API — :3000 is AdGuard on host net
 
   homeassistant:
     image: ghcr.io/home-assistant/home-assistant:2026.11.1
