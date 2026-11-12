@@ -15,7 +15,7 @@ flowchart TB
   ER605 <-->|"trunk · 802.1Q"| SW["SG2428P<br/>24× GbE PoE+ managed switch"]
 
   subgraph VLAN99["VLAN 99 — Management"]
-    N1["Node 1<br/>DNS · proxy · HA · MQTT · Kuma · Tailscale"]
+    N1["Node 1<br/>DNS · proxy · HA · MQTT · Tailscale"]
     N2["Node 2<br/>ZFS · Frigate · Immich · Omada Controller · metrics"]
     SW
     ER605

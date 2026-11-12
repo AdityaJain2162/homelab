@@ -17,7 +17,6 @@
     - mosquitto/config
     - mosquitto/data
     - mosquitto/log
-    - uptime-kuma
     - tailscale
     - alloy
 

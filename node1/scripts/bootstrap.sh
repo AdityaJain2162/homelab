@@ -67,7 +67,7 @@ fi
 
 # ---------- 4. state dirs (container PUID/PGID = 1000) ----------
 info "creating state dirs under $APPDATA"
-sudo mkdir -p "$APPDATA"/{adguardhome/{work,conf},npm,homeassistant,mosquitto/{config,data,log},uptime-kuma,tailscale,vault/{data,tls},victoria-metrics,grafana,alloy}
+sudo mkdir -p "$APPDATA"/{adguardhome/{work,conf},npm,homeassistant,mosquitto/{config,data,log},tailscale,vault/{data,tls},victoria-metrics,grafana,alloy}
 sudo chown -R 1000:1000 "$APPDATA"
 sudo chown -R 472:472 "$APPDATA/grafana"   # grafana image runs as uid 472
 
@@ -151,7 +151,6 @@ cat <<'EOF' | sed "s|<node1-ip>|${node1_ip}|g"
                   changeme — change it; proxy hosts synced by npm-sync.py)
    Home Assistant: http://<node1-ip>:8123  (onboarding wizard)
    Homepage     : http://<node1-ip>:3003   (or http://home.homelab once DNS is up)
-   Uptime Kuma  : http://<node1-ip>:3001
 
    Tailscale    : docker compose exec tailscale tailscale up
                   (or set TS_AUTHKEY in .env to skip this)

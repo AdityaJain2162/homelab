@@ -30,7 +30,6 @@ flowchart TB
         HA["Home Assistant — :8123"]
         MQ["Mosquitto MQTT — :1883"]
         Z2M["Zigbee2MQTT — :8099 (pending dongle)"]
-        KU["Uptime Kuma — :3001"]
         TS["Tailscale"]
         NE["node-exporter — :9100"]
     end
@@ -70,7 +69,6 @@ Network topology (WAN, PPPoE, VLANs, firewall rules): [`docs/network.md`](docs/n
 | Home Assistant | 1 | 24/7 automation |
 | Mosquitto (MQTT) | 1 | Used by Zigbee2MQTT here and Frigate on Node 2 |
 | Zigbee2MQTT | 1 | Blocked on USB Zigbee dongle — compose entry ready but commented |
-| Uptime Kuma | 1 | Watches Node 2 from outside it |
 | Node Exporter | both | Metrics scraped by VictoriaMetrics on Node 2 |
 | ZFS pool `datapool` | 2 | RAIDZ1, ~2 TB usable — **created fresh on Node 2**, never existed on Node 1 (no export/import needed) |
 | Samba / NFS shares | 2 | `/data`, `/srv/photos`, `/srv/shares` |

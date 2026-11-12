@@ -65,7 +65,6 @@ Give Node 1 a **static IP or DHCP reservation** on the router — everything poi
 | Nginx Proxy Manager | `jc21/nginx-proxy-manager:2.16.0` | 80, 443, 81 | Reverse proxy + TLS |
 | Home Assistant | `ghcr.io/home-assistant/home-assistant:2026.11.1` | 8123 | Home automation |
 | Mosquitto | `eclipse-mosquitto:2.1.2-alpine` | 1883, 9001 | MQTT broker — also used by Frigate on Node 2 |
-| Uptime Kuma | `louislam/uptime-kuma:2.5.9` | 3001 | Uptime monitoring/alerting |
 | Tailscale | `tailscale/tailscale:v1.104.4` | — | Mesh VPN / remote access |
 | HashiCorp Vault | `hashicorp/vault:2.2.1` | 8200 | Local secrets management — see [`docs/vault.md`](../docs/vault.md) |
 | Node Exporter | `quay.io/prometheus/node-exporter:v1.12.1` | 9100 | Metrics → VictoriaMetrics on Node 2 |
@@ -79,7 +78,7 @@ Give Node 1 a **static IP or DHCP reservation** on the router — everything poi
 
 **Bridge networking + published ports** — each container gets its own port namespace; `.env` vars (`NODE_EXPORTER_PORT`, `VICTORIAMETRICS_PORT`, `CADVISOR_PORT`, `BLACKBOX_PORT`, `GRAFANA_PORT`) set the *host* side of the mapping while internal ports stay at app defaults. **Exceptions on host networking:** AdGuard (`:53` DNS latency — no NAT per packet), Tailscale and Asterisk when enabled (they genuinely need host netns). Keep `config/vm/scrape.yml` service names in sync if services are renamed.
 
-**Currently commented out in `docker-compose.yml`:** `mosquitto` (needs `config/mosquitto/mosquitto.conf` copied into appdata first), `vault` (needs uid-100 dir fix, then `operator init` — see `docs/vault.md`), `uptime-kuma` (paused), `tailscale` (was restart-looping), `alloy` (log shipper — enable after Node 2's Loki is up), `zigbee2mqtt`, `asterisk`.
+**Currently commented out in `docker-compose.yml`:** `mosquitto` (needs `config/mosquitto/mosquitto.conf` copied into appdata first), `vault` (needs uid-100 dir fix, then `operator init` — see `docs/vault.md`), `tailscale` (was restart-looping), `alloy` (log shipper — enable after Node 2's Loki is up), `zigbee2mqtt`, `asterisk`.
 
 Host-level (installed by the Ansible `hardware_monitor` role, not compose): **smartmontools/smartd** watches all drives — short self-test Sun 02:00, long monthly — and alerts via `scripts/hw-alert.sh` to Telegram/Discord (targets in `/etc/homelab-alert.env`). **node-exporter** exposes host metrics for Grafana history/alerting on Node 2 (its `smartmon` collector was removed upstream in v1.9).
 
@@ -123,7 +122,7 @@ cd node1
 cp .env.example .env          # edit TZ etc. if needed
 
 # 1. Create state dirs
-sudo mkdir -p /opt/docker/appdata/{adguardhome/{work,conf},npm,homeassistant,mosquitto/{config,data,log},uptime-kuma,tailscale,vault/{data,tls},victoria-metrics,grafana}
+sudo mkdir -p /opt/docker/appdata/{adguardhome/{work,conf},npm,homeassistant,mosquitto/{config,data,log},tailscale,vault/{data,tls},victoria-metrics,grafana}
 sudo chown -R 1000:1000 /opt/docker/appdata
 sudo chown -R 472:472 /opt/docker/appdata/grafana   # grafana image runs as uid 472   # PUID/PGID=1000; harmless for images that ignore it
 
@@ -162,9 +161,8 @@ docker compose ps
 3. **Home Assistant** → http://node1:8123 — onboarding wizard.
 4. **Tailscale** → authenticate once:
    `docker compose exec tailscale tailscale up` (prints a login URL), or set `TS_AUTHKEY` in `.env` for headless auth.
-5. **Uptime Kuma** → http://node1:3001 — create admin, add monitors (router, Node 2 services once they exist), configure a push channel (Telegram/ntfy/email).
-6. **Mosquitto** — credentials created above are used by Zigbee2MQTT (here) and Frigate (Node 2 → `mqtt://$NODE1_IP:1883`, value from `.env`).
-7. **Vault** → https://node1:8200 — generate TLS cert (`scripts/vault-tls.sh`), `docker compose up -d vault`, `vault operator init`, save unseal keys + root token offline, unseal. Full runbook: [`docs/vault.md`](../docs/vault.md).
+5. **Mosquitto** — credentials created above are used by Zigbee2MQTT (here) and Frigate (Node 2 → `mqtt://$NODE1_IP:1883`, value from `.env`).
+6. **Vault** → https://node1:8200 — generate TLS cert (`scripts/vault-tls.sh`), `docker compose up -d vault`, `vault operator init`, save unseal keys + root token offline, unseal. Full runbook: [`docs/vault.md`](../docs/vault.md).
 
 ## Enabling Zigbee2MQTT (when the dongle arrives)
 

@@ -62,18 +62,6 @@ services:
   #   environment:
   #     - TZ=${TZ}
 
-  # uptime-kuma — DISABLED for now. Data persists in /opt/docker/appdata/uptime-kuma.
-  # uptime-kuma:
-  #   image: louislam/uptime-kuma:2.5.9    # NB: :latest still points at v1 — keep pinned
-  #   container_name: uptime-kuma
-  #   restart: unless-stopped
-  #   ports:
-  #     - "3001:3001"
-  #   volumes:
-  #     - /opt/docker/appdata/uptime-kuma:/app/data
-  #   environment:
-  #     - TZ=${TZ}
-
   # tailscale — DISABLED: container was restart-looping, parked for now.
   # State persists in /opt/docker/appdata/tailscale — re-enable by uncommenting.
   # WARNING: this is the remote-access path — keep LAN/SSH access before relying on it.
@@ -188,7 +176,7 @@ services:
     container_name: grafana
     restart: unless-stopped
     ports:
-      - "${GRAFANA_PORT:-3002}:3000"    # internal :3000; host :3000 is AdGuard, :3001 is Kuma (parked)
+      - "${GRAFANA_PORT:-3002}:3000"    # internal :3000; host :3000 is AdGuard
     volumes:
       - /opt/docker/appdata/grafana:/var/lib/grafana
       - ./config/grafana/provisioning:/etc/grafana/provisioning:ro

@@ -33,7 +33,7 @@ Status: Owned. Standard desktop cabinet.
 | Runtime | Docker Engine + Compose |
 | Idle power | ~25–35 W |
 
-Storage layout (ext4): `/opt/docker/appdata/*` for configs and state, SQLite DBs for Home Assistant and Uptime Kuma, systemd journal capped at 1 GB.
+Storage layout (ext4): `/opt/docker/appdata/*` for configs and state, SQLite DBs for Home Assistant, systemd journal capped at 1 GB.
 
 Services on Node 1:
 
@@ -43,7 +43,6 @@ Services on Node 1:
 - Home Assistant Core
 - Mosquitto MQTT
 - Zigbee2MQTT (needs a USB Zigbee coordinator dongle, preferably on a short USB extension cable)
-- Uptime Kuma (lives here so it can alert when Node 2 goes down)
 - Node Exporter (ships metrics to Node 2)
 
 Removed from Node 1: Omada Controller, VictoriaMetrics, Grafana, Prowlarr, Bazarr — heavy or AVX-dependent.
@@ -93,7 +92,6 @@ Services on Node 2:
 | Tailscale/WireGuard | 1 | Remote access even if Node 2 is off |
 | Home Assistant | 1 | Automations run 24/7 |
 | Mosquitto, Zigbee2MQTT | 1 | Dongle is on Node 1 |
-| Uptime Kuma | 1 | Must watch Node 2 from outside it |
 | Omada Controller | 2 | Needs AVX (MongoDB). Network keeps running without it |
 | Frigate, go2rtc | 2 | Needs iGPU, dedicated recording disk |
 | Immich + Postgres + Valkey | 2 | Storage and ML |
@@ -189,7 +187,7 @@ environment:
 - Recordings at `/media/frigate/recordings`; database on the SSD.
 - Retention example: continuous 3 days, alerts/detections 14 days — tune to disk.
 - MQTT points to Mosquitto on **Node 1** (Node 1 IP, port 1883, username + password).
-- Uptime Kuma on Node 1 probes Frigate's port.
+- Blackbox exporter on Node 1 probes Frigate's port.
 
 Capacity: 1 TB ≈ 5–8 days continuous for 2 cameras at 1080p/4 Mbps. More cameras → shorter. Decide camera count before finalising; 2 TB is a sensible upgrade for 4+ cameras.
 
@@ -206,7 +204,7 @@ Capacity: 1 TB ≈ 5–8 days continuous for 2 cameras at 1080p/4 Mbps. More cam
 
 - Metrics: Node Exporter on both nodes, cAdvisor on Node 2, scraped by VictoriaMetrics on Node 2 → Grafana.
 - Logs: Grafana Alloy ships Docker + system logs to Loki on Node 2. Cap Loki retention (14–30 days) so it doesn't fill the SSD.
-- Alerts: Uptime Kuma on Node 1 monitors Node 2, Frigate, Immich, Omada, router. Push channel (Telegram/ntfy/email) to your phone.
+- Alerts: Grafana alert rules (fed by blackbox probes) monitor Node 2, Frigate, Immich, Omada, router. Push channel (Telegram/Discord) to your phone.
 - Optional: ZFS and SMART alerts (smartmontools → email or ntfy).
 
 ## 12–13. Budget & Sourcing
@@ -219,11 +217,11 @@ Capacity: 1 TB ≈ 5–8 days continuous for 2 cameras at 1080p/4 Mbps. More cam
 2. Install Ubuntu Server on the SSD. Install Docker + Compose.
 3. Install ZFS (`zfsutils-linux`), set ARC limit, create pool + datasets (§5).
 4. Format and mount the Frigate disk.
-5. Bring up Node 1 services: AdGuard, proxy, Tailscale, Mosquitto, Zigbee2MQTT, Home Assistant, Uptime Kuma.
+5. Bring up Node 1 services: AdGuard, proxy, Tailscale, Mosquitto, Zigbee2MQTT, Home Assistant.
 6. Bring up Node 2 core: Immich, Postgres, Valkey, then Frigate.
 7. Bring up Omada on Node 2 and adopt router/switch/APs.
 8. Media pipeline: Gluetun first (confirm VPN IP), then qBittorrent, Sonarr, Radarr, Prowlarr, Bazarr.
-9. Monitoring: VictoriaMetrics, Grafana, Loki, Alloy + Uptime Kuma checks.
+9. Monitoring: VictoriaMetrics, Grafana, Loki, Alloy + Grafana alert rules.
 10. Sanoid snapshots, backup job, test restore.
 
 ## 15. Open Questions

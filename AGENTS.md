@@ -6,7 +6,7 @@ Read this first. It is the runbook for provisioning and operating the homelab. I
 
 Two-node homelab, documented as resumable infrastructure-as-code.
 
-- **Node 1** (owned, live): always-on infrastructure — AdGuard DNS (primary), Nginx Proxy Manager, Tailscale, Home Assistant, Mosquitto, Uptime Kuma, node-exporter, **HashiCorp Vault** (local secrets store). Athlon II X2 / 8 GB / **no AVX** — nothing heavy goes here.
+- **Node 1** (owned, live): always-on infrastructure — AdGuard DNS (primary), Nginx Proxy Manager, Tailscale, Home Assistant, Mosquitto, node-exporter, **HashiCorp Vault** (local secrets store). Athlon II X2 / 8 GB / **no AVX** — nothing heavy goes here.
 - **Node 2** (planned purchase): ZFS storage (pool created fresh there — never on Node 1), Frigate, Immich, Omada, media pipeline, monitoring, and a **secondary AdGuard DNS** instance.
 - ER605 router owns routing/DHCP/PPPoE; VLAN plan and firewall rules in `docs/network.md`.
 
@@ -17,7 +17,7 @@ Two-node homelab, documented as resumable infrastructure-as-code.
 3. **Pinned image tags everywhere. No Watchtower.** Updates are manual (`scripts/update.sh`) or via git-driven `pull-deploy.sh`.
 4. **Node 1 has no bulk storage.** The 3× 1 TB HDDs are owned but installed in Node 2; the ZFS pool is born there. Do not add ZFS/Samba to Node 1.
 5. **Node 2 compose files are DRAFTS** — verify image tags and paths at deploy time.
-6. **Node 1 must survive Node 2 being off** — DNS primary, MQTT, HA, Kuma, Tailscale all live there.
+6. **Node 1 must survive Node 2 being off** — DNS primary, MQTT, HA, Tailscale all live there.
 7. Commit as the repo owner (no tool attribution trailers). Push to `main` on `AdityaJain2162/homelab`.
 
 ## Network quick reference
@@ -76,9 +76,8 @@ Most first-boot config is seeded automatically — see "What bootstrap/Ansible a
 2. **NPM** → `:81` — change default admin creds immediately, then put them in `node1/.env` as `NPM_USER`/`NPM_PASSWORD` (feeds `npm-sync.py`, which bootstrap/Ansible runs automatically once creds exist).
 3. **Home Assistant** → `:8123` — onboarding. Fronted via NPM, HA returns `400 Bad Request` unless `use_x_forwarded_for: true` + `trusted_proxies` are set. **HA ≥ 2026.x gotcha:** the `http:` yaml block is migrated into `.storage/http` on FIRST boot only (`yaml_migration_done: true`) — later yaml edits are silently ignored. Seed `node1/config/homeassistant/configuration.yaml` into appdata BEFORE first `up` (copy command in that file's header). To fix a running instance: stop HA → delete `.storage/http` → start (re-migrates yaml into a `pending` slot — if it reverts to `stable`, promote it manually: stop HA → copy `data.pending` over `data.stable` in that file → start). Password resets via `hass --script auth` must run while HA is STOPPED (use `docker run --rm -v appdata:/config --entrypoint hass <image> ...`) — the running instance caches auth in memory and can clobber the change.
 4. **Tailscale** → `docker compose -f node1/docker-compose.yml exec tailscale tailscale up` (or set `TS_AUTHKEY` in `node1/.env`).
-5. **Uptime Kuma** → `:3001` — admin + monitors + a push notification channel.
-6. **Router (ER605)** — DHCP DNS: Node 1 primary, Node 2 secondary (once it exists); inter-VLAN firewall must allow UDP+TCP 53 to **both** node IPs on every user VLAN; keep router upstream DNS as fallback.
-7. Write the chosen MQTT credentials into `node1/.env` (`MQTT_USER`/`MQTT_PASSWORD`) — they are the source of truth reused by Zigbee2MQTT and Node 2's Frigate.
+5. **Router (ER605)** — DHCP DNS: Node 1 primary, Node 2 secondary (once it exists); inter-VLAN firewall must allow UDP+TCP 53 to **both** node IPs on every user VLAN; keep router upstream DNS as fallback.
+6. Write the chosen MQTT credentials into `node1/.env` (`MQTT_USER`/`MQTT_PASSWORD`) — they are the source of truth reused by Zigbee2MQTT and Node 2's Frigate.
 
 ## Node 2 bring-up order (when hardware exists)
 
