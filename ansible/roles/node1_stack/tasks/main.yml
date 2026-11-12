@@ -137,6 +137,27 @@
     sysctl_file: /etc/sysctl.d/99-ip-forward.conf
     reload: true
 
+# The tailscale container ships iptables-legacy; Ubuntu hosts run nftables and
+# modprobe needs CAP_SYS_MODULE (not granted) → host loads ip_tables so the
+# shared netns gets the filter table for ts-input/ts-forward.
+- name: Load ip_tables for tailscaled (subnet-router netfilter)
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/tailscale.conf
+    content: |
+      ip_tables
+      ip6_tables
+    mode: "0644"
+  register: tailscale_modules
+
+- name: Modprobe legacy iptables modules now
+  ansible.builtin.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - ip_tables
+    - ip6_tables
+  failed_when: false   # ip6_tables may be absent on some kernels
+
 - name: Start Node 1 stack
   ansible.builtin.command: docker compose up -d
   args:

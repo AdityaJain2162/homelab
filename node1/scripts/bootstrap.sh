@@ -65,13 +65,22 @@ if ! grep -rq 'DNSStubListener=no' /etc/systemd/resolved.conf /etc/systemd/resol
   sudo systemctl restart systemd-resolved
 fi
 
-# ---------- 3c. IPv4 forwarding (Tailscale subnet router) ----------
+# ---------- 3c. forwarding + ip_tables (Tailscale subnet router) ----------
 # Docker enables ip_forward at runtime anyway; persisting keeps the node
-# routing LAN_SUBNET → tailnet even if Docker isn't running yet.
+# routing LAN_SUBNET → tailnet even if Docker isn't running yet. The tailscale
+# container also needs the legacy ip_tables module — it ships iptables-legacy
+# but Ubuntu runs nftables, and module loading requires CAP_SYS_MODULE (not
+# granted), so the host loads it and every netns gets the filter table.
 if [[ ! -f /etc/sysctl.d/99-ip-forward.conf ]]; then
   info "enabling net.ipv4.ip_forward (Tailscale subnet router)"
-  printf 'net.ipv4.ip_forward=1\n' | sudo tee /etc/sysctl.d/99-ip-forward.conf >/dev/null
+  printf 'net.ipv4.ip_forward=1\nnet.ipv6.conf.all.forwarding=1\n' | sudo tee /etc/sysctl.d/99-ip-forward.conf >/dev/null
   sudo sysctl -p /etc/sysctl.d/99-ip-forward.conf >/dev/null
+fi
+if [[ ! -f /etc/modules-load.d/tailscale.conf ]]; then
+  info "loading ip_tables/ip6_tables (tailscaled legacy netfilter)"
+  printf 'ip_tables\nip6_tables\n' | sudo tee /etc/modules-load.d/tailscale.conf >/dev/null
+  sudo modprobe ip_tables
+  sudo modprobe ip6_tables || true   # no v6 filter on kernels w/o ip6_tables
 fi
 
 # ---------- 4. state dirs (container PUID/PGID = 1000) ----------
