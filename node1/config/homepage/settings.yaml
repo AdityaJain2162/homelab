@@ -1,21 +1,43 @@
----
-# Homepage settings — theme/layout. Service tiles live in services.yaml,
-# bookmarks in bookmarks.yaml (same dir, auto-loaded).
+# Homepage settings — theme, header, layout grid.
+# Service tiles → services.yaml · top widgets → widgets.yaml
+# links row → bookmarks.yaml · background gradient → custom.css
+
 title: Homelab
 theme: dark
 color: slate
-headerStyle: clean
-statusStyle: dot          # green/grey dot per service (needs docker.sock)
+headerStyle: boxed          # title in a floating card — pairs with the gradient bg
+cardBlur: sm                # frosted-glass tiles over the custom.css gradient
+statusStyle: dot            # green/grey dot per service (docker.sock mount)
+fullWidth: true
+language: en
+target: _blank
+
+# Ctrl+/ quick launcher — search services by name/description
+quicklaunch:
+  searchDescriptions: true
+  hideInternetSearch: false
+  showSearchSuggestions: true
+  hideVisitURL: false
+
+# Alternative to the custom.css gradient — an external image:
+# background:
+#   image: https://images.unsplash.com/photo-xxx   # any URL
+#   blur: sm
+#   saturate: 60
+#   brightness: 45
+#   opacity: 55
+
+# Group names must match the headers in services.yaml exactly.
 layout:
-  Infrastructure:
+  Core:
     style: row
-    columns: 4
-  Automation:
+    columns: 5
+  Smart Home:
     style: row
-    columns: 4
-  Monitoring:
+    columns: 3
+  Observability:
     style: row
-    columns: 4
-  Planned:
+    columns: 5
+  "Node 2 · planned":
     style: row
     columns: 4

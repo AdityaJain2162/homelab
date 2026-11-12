@@ -213,6 +213,10 @@ services:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - HOMEPAGE_ALLOWED_HOSTS=${HOMEPAGE_ALLOWED_HOSTS:-home.homelab,192.168.1.60:3003}
+      # feeds {{HOMEPAGE_VAR_*}} templating inside config/homepage/*.yaml —
+      # keeps node IPs out of the committed yaml
+      - HOMEPAGE_VAR_NODE1_IP=${NODE1_IP}
+      - HOMEPAGE_VAR_NODE2_IP=${NODE2_IP:-192.168.1.61}
 
   # alloy — ships Docker/journald logs to Node 2's Loki (central logs).
   # Uncomment once Node 2's monitoring stack is running — needs NODE2_IP in .env.

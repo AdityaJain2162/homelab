@@ -1,0 +1,19 @@
+# Bookmark strip — small link chips under the widgets, above service tiles.
+# abbr: shows a 2-letter chip when no icon; icon: works like service icons.
+
+- Quick Links:
+    - Router · ER605:
+        - abbr: ER
+          href: http://192.168.1.1        # gateway IP — adjust if yours differs
+    - GitHub Repo:
+        - abbr: GH
+          href: https://github.com/AdityaJain2162/homelab
+          icon: github.png
+    - Tailscale Admin:
+        - abbr: TS
+          href: https://login.tailscale.com/admin/machines
+          icon: tailscale.png
+    - Homepage Docs:
+        - abbr: HP
+          href: https://gethomepage.dev
+          icon: homepage.png

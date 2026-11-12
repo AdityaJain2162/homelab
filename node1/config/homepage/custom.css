@@ -1,0 +1,23 @@
+/* Custom background — layered dark gradient, fully offline (no image URL).
+   Pairs with `cardBlur: sm` in settings.yaml for a frosted-glass look.
+   Swap for a photo via `background:` in settings.yaml if preferred. */
+
+html,
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(1100px 600px at 15% -10%, rgba(56, 189, 248, 0.14), transparent 60%),
+    radial-gradient(900px 500px at 90% 0%, rgba(139, 92, 246, 0.12), transparent 55%),
+    linear-gradient(160deg, #0b1120 0%, #0f172a 50%, #020617 100%) !important;
+  background-attachment: fixed;
+}
+
+/* slim scrollbars for the tiles grid */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+}

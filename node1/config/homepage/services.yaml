@@ -1,72 +1,142 @@
----
-# Service tiles. `container:` enables the status dot via the mounted docker
-# socket — value must match container_name in docker-compose.yml.
-# `href` uses .homelab names → AdGuard wildcard → NPM :80 proxy hosts.
-# icon: filenames from homepage's bundled icon set — a wrong name just renders
-# blank, name/href still work. Check gethomepage.dev docs for exact names.
+# ══════════════════════════════════════════════════════════════════════
+# Service tiles on home.homelab
+#   container: → live status dot via docker.sock — must match
+#                container_name in docker-compose.yml
+#   href:      → *.homelab names → AdGuard wildcard → NPM :80 proxy hosts
+#   {{HOMEPAGE_VAR_*}} → env vars passed via compose (NODE*_IP from .env)
+#   icon: → bundled (foo.png) / si-* / mdi-* / sh-* — wrong name = blank
+#   widget: → live stats inside the tile; the commented examples need
+#             creds added as HOMEPAGE_VAR_* env vars — never commit secrets
+# ══════════════════════════════════════════════════════════════════════
 
-- Infrastructure:
-    - name: AdGuard Home
-      icon: adguardhome.png
-      href: http://adguard.homelab
-      description: DNS + ad blocking
-      container: adguardhome
-    - name: Nginx Proxy Manager
-      icon: nginxproxymanager.png
-      href: http://192.168.1.60:81
-      description: Reverse proxy admin
-      container: npm
-    - name: Homepage
-      icon: homepage.png
-      href: http://home.homelab
-      description: This page
-      container: homepage
-    - name: Tailscale
-      icon: tailscale.png
-      href: https://login.tailscale.com/admin/machines
-      description: Mesh VPN admin
+- Core:
+    - AdGuard Home:
+        icon: adguardhome.png
+        href: http://adguard.homelab
+        description: DNS · ad blocking
+        container: adguardhome
+        # live query/block stats — add HOMEPAGE_VAR_ADGUARD_USER and
+        # HOMEPAGE_VAR_ADGUARD_PASSWORD to compose env + .env, then uncomment:
+        # widget:
+        #   type: adguardhome
+        #   url: http://{{HOMEPAGE_VAR_NODE1_IP}}:3000
+        #   username: "{{HOMEPAGE_VAR_ADGUARD_USER}}"
+        #   password: "{{HOMEPAGE_VAR_ADGUARD_PASSWORD}}"
 
-- Automation:
-    - name: Home Assistant
-      icon: homeassistant.png
-      href: http://homeassistant.homelab
-      description: Home automation
-      container: homeassistant
-    # - name: Uptime Kuma        # parked — uncomment when enabled
-    #   icon: uptimekuma.png
-    #   href: http://192.168.1.60:3001
-    #   container: uptime-kuma
-    # - name: Mosquitto MQTT     # parked — needs mosquitto.conf in appdata
-    #   icon: mqtt.png
-    #   href: mqtt://192.168.1.60:1883
+    - Nginx Proxy Manager:
+        icon: nginxproxymanager.png
+        href: http://{{HOMEPAGE_VAR_NODE1_IP}}:81
+        description: Reverse proxy · *.homelab
+        container: npm
 
-- Monitoring:
-    - name: Grafana
-      icon: grafana.png
-      href: http://grafana.homelab
-      description: Dashboards + alerts
-      container: grafana
-    - name: VictoriaMetrics
-      icon: victoriametrics.png
-      href: http://vm.homelab
-      description: Metrics TSDB (3-month retention)
-      container: victoria-metrics
-    - name: Node Exporter
-      icon: prometheus.png
-      href: http://192.168.1.60:9100/metrics
-      description: Host metrics
-      container: node-exporter
+    - Homepage:
+        icon: homepage.png
+        href: http://home.homelab
+        description: You are here
+        container: homepage
 
-- Planned:
-    - name: Immich
-      icon: immich.png
-      href: http://immich.homelab
-      description: Photos — Node 2
-    - name: Frigate
-      icon: frigate.png
-      href: http://frigate.homelab
-      description: CCTV/NVR — Node 2
-    - name: Omada Controller
-      icon: omada.png
-      href: http://omada.homelab
-      description: Network management — Node 2
+    - Tailscale:
+        icon: tailscale.png
+        href: https://login.tailscale.com/admin/machines
+        description: Mesh VPN admin console
+        # container: tailscale    # uncomment once enabled in compose
+
+    - Vault:
+        icon: vault.png
+        href: https://{{HOMEPAGE_VAR_NODE1_IP}}:8200
+        description: Secrets — parked, self-signed TLS
+        # container: vault        # uncomment once enabled in compose
+
+- Smart Home:
+    - Home Assistant:
+        icon: homeassistant.png
+        href: http://homeassistant.homelab
+        description: Automation hub
+        container: homeassistant
+        # entity/state widget — needs a long-lived token (HA profile →
+        # security → long-lived access tokens) as HOMEPAGE_VAR_HA_TOKEN:
+        # widget:
+        #   type: homeassistant
+        #   url: http://homeassistant:8123
+        #   key: "{{HOMEPAGE_VAR_HA_TOKEN}}"
+
+    - Mosquitto MQTT:
+        icon: mqtt.png
+        description: Broker · :1883 — parked
+
+    - Zigbee2MQTT:
+        icon: zigbee2mqtt.png
+        href: http://{{HOMEPAGE_VAR_NODE1_IP}}:8099
+        description: Zigbee bridge — parked
+
+- Observability:
+    - Grafana:
+        icon: grafana.png
+        href: http://grafana.homelab
+        description: Dashboards + alerts
+        container: grafana
+
+    - VictoriaMetrics:
+        icon: victoriametrics.png
+        href: http://vm.homelab
+        description: Metrics TSDB · 3-mo retention
+        container: victoria-metrics
+
+    - cAdvisor:
+        icon: cadvisor.png
+        href: http://{{HOMEPAGE_VAR_NODE1_IP}}:8080
+        description: Container metrics
+        container: cadvisor
+
+    - Node Exporter:
+        icon: prometheus.png
+        href: http://{{HOMEPAGE_VAR_NODE1_IP}}:9100/metrics
+        description: Host metrics
+        container: node-exporter
+
+    - Blackbox Exporter:
+        icon: mdi-radar
+        href: http://{{HOMEPAGE_VAR_NODE1_IP}}:9115
+        description: HTTP probes
+        container: blackbox
+
+- "Node 2 · planned":
+    - Immich:
+        icon: immich.png
+        href: http://immich.homelab        # NPM route exists → 502 until Node 2 is up
+        description: Photos
+
+    - Frigate:
+        icon: frigate.png
+        href: http://{{HOMEPAGE_VAR_NODE2_IP}}:5000
+        description: CCTV / NVR
+
+    - Omada Controller:
+        icon: omada.png
+        href: https://{{HOMEPAGE_VAR_NODE2_IP}}:8043
+        description: SDN — router/switch/APs
+
+    - qBittorrent:
+        icon: qbittorrent.png
+        href: http://{{HOMEPAGE_VAR_NODE2_IP}}:8080
+        description: Torrents · via Gluetun VPN
+
+    - Sonarr:
+        icon: sonarr.png
+        href: http://{{HOMEPAGE_VAR_NODE2_IP}}:8989
+        description: TV
+
+    - Radarr:
+        icon: radarr.png
+        href: http://{{HOMEPAGE_VAR_NODE2_IP}}:7878
+        description: Movies
+
+    - Prowlarr:
+        icon: prowlarr.png
+        href: http://{{HOMEPAGE_VAR_NODE2_IP}}:9696
+        description: Indexers
+
+    - Bazarr:
+        icon: bazarr.png
+        href: http://{{HOMEPAGE_VAR_NODE2_IP}}:6767
+        description: Subtitles

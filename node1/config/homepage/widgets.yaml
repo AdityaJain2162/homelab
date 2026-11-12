@@ -1,0 +1,34 @@
+# Top-of-page widgets — rendered above the service groups.
+# Docs: gethomepage.dev → widgets
+
+- search:
+    provider: duckduckgo      # no API key needed; also: google, bing, kagi…
+    target: _blank
+    focus: false              # true = keyboard opens search on page load
+
+- datetime:
+    format:
+      dateStyle: short
+      timeStyle: medium
+      hour12: false
+
+# Node 1 vitals — reads /proc inside the homepage container (host counters
+# on cgroup v1; add `cgroupns: host` in compose if v2 shows wrong values).
+- resources:
+    label: node1
+    expanded: true            # show all stats, no dropdown
+    cpu: true
+    memory: true
+    disk: /
+    uptime: true
+    network: true
+
+# Node 2 twin — uncomment when it exists:
+# - resources:
+#     label: node2
+#     expanded: true
+#     cpu: true
+#     memory: true
+#     disk: /
+#     uptime: true
+#     network: true
