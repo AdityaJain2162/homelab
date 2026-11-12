@@ -206,29 +206,6 @@ services:
       - HOMEPAGE_VAR_NODE1_IP=${NODE1_IP}
       - HOMEPAGE_VAR_NODE2_IP=${NODE2_IP:-192.168.1.61}
 
-  # alloy — ships Docker/journald logs to Node 2's Loki (central logs).
-  # Uncomment once Node 2's monitoring stack is running — needs NODE2_IP in .env.
-  # alloy:
-  #   image: grafana/alloy:v1.21.3
-  #   container_name: alloy
-  #   restart: unless-stopped
-  #   command:
-  #     - run
-  #     - --storage.path=/var/lib/alloy/data
-  #     - /etc/alloy/config.alloy
-  #   environment:
-  #     - LOKI_PUSH_URL=http://${NODE2_IP}:3100/loki/api/v1/push
-  #     - TZ=${TZ}
-  #   ports:
-  #     - "12345:12345"               # Alloy UI
-  #   volumes:
-  #     - ./config/alloy/config.alloy:/etc/alloy/config.alloy:ro
-  #     - /var/run/docker.sock:/var/run/docker.sock:ro
-  #     - /var/log/journal:/var/log/journal:ro
-  #     - /run/log/journal:/run/log/journal:ro
-  #     # journal source may need privileged: true if entries are empty — verify at deploy
-  #     - /opt/docker/appdata/alloy:/var/lib/alloy/data
-
   # zigbee2mqtt — uncomment when the USB coordinator arrives.
   # Find the device path first: ls -l /dev/serial/by-id/
   # zigbee2mqtt:

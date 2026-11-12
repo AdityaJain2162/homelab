@@ -18,7 +18,6 @@
     - mosquitto/data
     - mosquitto/log
     - tailscale
-    - alloy
 
 - name: Install Mosquitto config
   ansible.builtin.copy:
