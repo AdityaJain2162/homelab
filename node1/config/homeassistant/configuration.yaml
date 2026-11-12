@@ -1,0 +1,31 @@
+# Seed configuration.yaml for a FRESH Home Assistant install.
+#
+# Copy to the appdata dir BEFORE first `docker compose up`:
+#   sudo cp node1/config/homeassistant/configuration.yaml \
+#     /opt/docker/appdata/homeassistant/configuration.yaml
+#
+# Why this matters (HA ≥ 2026.x): on FIRST boot HA migrates the `http:`
+# section into .storage/http and marks yaml_migration_done. After that the
+# yaml block is IGNORED — the store wins. Seeding the file pre-boot means
+# the migration captures these proxy settings. To change them later either
+# edit .storage/http (while stopped) or delete it and let it re-migrate.
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+# Reverse-proxy support — REQUIRED when fronted by NPM or requests 400.
+# 172.16.0.0/12 covers Docker bridge subnets (NPM reaches HA from there);
+# the LAN range covers direct clients if you ever proxy from LAN addresses.
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 172.16.0.0/12
+    - 192.168.1.0/24        # adjust to your LAN subnet
