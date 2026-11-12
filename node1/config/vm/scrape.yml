@@ -28,7 +28,7 @@ scrape_configs:
       module: [http_ok]
     static_configs:
       - targets:
-          - adguardhome:3000            # AdGuard admin UI
+          - host.docker.internal:3000   # AdGuard admin UI (host network)
           - grafana:3000                # Grafana (host publishes :3002)
           - http://victoria-metrics:8428/vmui/   # VM UI — probe /vmui/ path, root / is unreliable
           - host.docker.internal:8123   # Home Assistant (host network)

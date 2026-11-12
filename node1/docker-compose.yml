@@ -7,10 +7,9 @@ services:
     image: adguard/adguardhome:v0.107.80
     container_name: adguardhome
     restart: unless-stopped
-    ports:
-      - "53:53/tcp"    # DNS
-      - "53:53/udp"    # DNS
-      - "3000:3000"    # admin UI — set AdGuard web port to 3000 in its settings (NPM owns :80)
+    network_mode: host    # DNS latency: binds :53/:3000 directly, no NAT/docker-proxy per packet
+    # AdGuard's own config controls the binds: DNS :53 (tcp+udp), web UI :3000.
+    # Keep web port 3000 — NPM owns :80/:443 for domain routing.
     volumes:
       - /opt/docker/appdata/adguardhome/work:/opt/adguardhome/work
       - /opt/docker/appdata/adguardhome/conf:/opt/adguardhome/conf
