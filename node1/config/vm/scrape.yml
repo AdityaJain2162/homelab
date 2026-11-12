@@ -33,7 +33,7 @@ scrape_configs:
       - targets:
           - host.docker.internal:3000              # AdGuard admin UI (host-networked)
           - grafana:3000                          # Grafana UI
-          - http://victoriametrics:8428/vmui/     # VM UI — probe /vmui/ path, root / is unreliable
+          - http://victoria-metrics:8428/vmui/   # VM UI — probe /vmui/ path, root / is unreliable
           - homeassistant:8123                    # Home Assistant
     relabel_configs:
       - source_labels: [__address__]
