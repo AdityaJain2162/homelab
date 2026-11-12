@@ -1,5 +1,6 @@
 # VictoriaMetrics scrape config — node1/docker-compose.yml mounts this at /etc/vm.
 # Everything runs network_mode: host → all targets are localhost:<port>.
+# Ports must match node1/.env (NODE_EXPORTER_PORT etc.) — YAML can't read .env.
 
 global:
   scrape_interval: 15s
