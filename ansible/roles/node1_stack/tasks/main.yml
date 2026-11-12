@@ -19,6 +19,7 @@
     - mosquitto/log
     - uptime-kuma
     - tailscale
+    - alloy
 
 - name: Install Mosquitto config
   ansible.builtin.copy:

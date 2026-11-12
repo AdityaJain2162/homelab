@@ -54,7 +54,10 @@ services:
       - TZ=${TZ}
     volumes:
       - ../config/alloy/config.alloy:/etc/alloy/config.alloy:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro    # for docker log shipping (TODO config)
+      - /var/run/docker.sock:/var/run/docker.sock:ro    # docker log shipping
+      - /var/log/journal:/var/log/journal:ro            # journald logs
+      - /run/log/journal:/run/log/journal:ro
+      # journal source may need privileged: true if entries are empty — verify at deploy
       - /opt/docker/appdata/monitoring/alloy:/var/lib/alloy/data
     ports:
       - "12345:12345"               # Alloy UI

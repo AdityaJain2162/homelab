@@ -1,6 +1,6 @@
-# Grafana Alloy — Node 2. Scrapes metrics → VictoriaMetrics (same compose network).
+# Grafana Alloy — Node 2. Scrapes metrics → VictoriaMetrics (same compose network)
+# and ships Docker + journald logs → Loki.
 # Runtime vars come from the container environment (see compose/monitoring.yml + .env).
-# TODO: add loki.source.* blocks for Docker/journal log shipping to Loki.
 
 prometheus.remote_write "vm" {
   endpoint {
@@ -27,4 +27,46 @@ prometheus.scrape "cadvisor" {
   targets = [{ __address__ = "cadvisor:8080", job = "cadvisor", instance = "node2" }]
   forward_to = [prometheus.remote_write.vm.receiver]
   scrape_interval = "30s"
+}
+
+// ---------- Log shipping → Loki ----------
+
+loki.write "loki" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+// Docker container logs via the mounted socket (ro in compose)
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  rule {
+    target_label = "node"
+    replacement  = "node2"
+  }
+}
+
+loki.source.docker "containers" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.relabel.containers.output
+  relabel_rules = discovery.relabel.containers.rules
+  forward_to    = [loki.write.loki.receiver]
+}
+
+// Host/system logs via journald — needs /var/log/journal mounted (see compose)
+loki.source.journal "journal" {
+  path       = "/var/log/journal"
+  labels     = { job = "systemd-journal", node = "node2" }
+  forward_to = [loki.write.loki.receiver]
 }

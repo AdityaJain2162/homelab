@@ -1,0 +1,44 @@
+# Grafana Alloy — Node 1. Log shipper ONLY: Docker + journald logs → Node 2's Loki.
+# Metrics stay local — VictoriaMetrics scrapes node-exporter/cAdvisor directly.
+# Enable the alloy service in docker-compose.yml after Node 2's monitoring stack is up.
+# LOKI_PUSH_URL comes from the container environment (see compose + .env).
+
+loki.write "node2" {
+  endpoint {
+    url = env("LOKI_PUSH_URL")
+  }
+}
+
+// Docker container logs via the mounted socket (ro in compose)
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  rule {
+    target_label = "node"
+    replacement  = "node1"
+  }
+}
+
+loki.source.docker "containers" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.relabel.containers.output
+  relabel_rules = discovery.relabel.containers.rules
+  forward_to    = [loki.write.node2.receiver]
+}
+
+// Host/system logs via journald — needs /var/log/journal mounted (see compose)
+loki.source.journal "journal" {
+  path       = "/var/log/journal"
+  labels     = { job = "systemd-journal", node = "node1" }
+  forward_to = [loki.write.node2.receiver]
+}

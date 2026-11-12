@@ -67,7 +67,7 @@ fi
 
 # ---------- 4. state dirs (container PUID/PGID = 1000) ----------
 info "creating state dirs under $APPDATA"
-sudo mkdir -p "$APPDATA"/{adguardhome/{work,conf},npm,homeassistant,mosquitto/{config,data,log},uptime-kuma,tailscale,vault/{data,tls},victoria-metrics,grafana}
+sudo mkdir -p "$APPDATA"/{adguardhome/{work,conf},npm,homeassistant,mosquitto/{config,data,log},uptime-kuma,tailscale,vault/{data,tls},victoria-metrics,grafana,alloy}
 sudo chown -R 1000:1000 "$APPDATA"
 sudo chown -R 472:472 "$APPDATA/grafana"   # grafana image runs as uid 472
 
