@@ -82,7 +82,7 @@ These need a browser or interactive auth — guide the user through them:
 ## Node 2 bring-up order (when hardware exists)
 
 1. Ubuntu 26.04 install → `ansible-playbook site.yml --limit node2`.
-2. ZFS: cap ARC ~6 GiB, create 3-way mirror `datapool` fresh on the 3 HDDs, datasets `/data`, `/srv/photos`, `/srv/shares` + quotas — exact commands in `node2/README.md`. Frigate disk: ext4 at `/media/frigate/recordings`.
+2. ZFS: cap ARC ~6 GiB, create RAIDZ1 `datapool` fresh on the 3 HDDs, datasets `/data`, `/srv/photos`, `/srv/shares` + quotas — exact commands in `node2/README.md`. Frigate disk: ext4 at `/media/frigate/recordings`.
 3. Fill `node2/.env` (IPs, `DB_PASSWORD`, `GRAFANA_ADMIN_PASSWORD`, VPN creds).
 4. Bring stacks up in order: `dns` → `immich` → `frigate` → `media` (verify Gluetun VPN IP before qBittorrent) → `monitoring` → `omada`.
 5. Give Node 2's AdGuard its config — either import the saved `AdGuardHome.yaml`, or deploy the template `node1/config/adguard/AdGuardHome.yaml` with `bind_port` set to `ADGUARD_WEB_PORT` (default 3001) and a fresh password hash.

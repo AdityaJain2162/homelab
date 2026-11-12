@@ -8,7 +8,7 @@ Two-node homelab. **Node 1 is owned and being set up now**; Node 2 is a planned 
 | CPU | AMD Athlon II X2 270 (2C/2T, **no AVX**, no iGPU) | Intel i5-10400 (6C/12T, AVX2, UHD 630 iGPU) |
 | RAM | 8 GB DDR3 | 32 GB DDR4 |
 | Boot SSD | 256 GB SATA | 256 GB SATA |
-| Bulk storage | 256 GB SSD only — 3× 1 TB HDD owned but **not installed**, reserved for Node 2 | 3× 1 TB HDD (ZFS mirror, owned) + 1 TB HDD (Frigate) + 256 GB SSD |
+| Bulk storage | 256 GB SSD only — 3× 1 TB HDD owned but **not installed**, reserved for Node 2 | 3× 1 TB HDD (ZFS RAIDZ1, owned) + 1 TB HDD (Frigate) + 256 GB SSD |
 | OS | Ubuntu Server 26.04 LTS | Ubuntu Server 26.04 LTS |
 | Network | 1 GbE (~110 MB/s real), wired only | 1 GbE |
 
@@ -36,7 +36,7 @@ flowchart TB
     end
 
     subgraph NODE2["Node 2 — Storage + Apps (planned)"]
-        ZFS[("ZFS datapool — 3×1TB mirror")]
+        ZFS[("ZFS datapool — 3×1TB RAIDZ1")]
         FFD[("Frigate disk — 1TB ext4")]
         FR["Frigate + go2rtc — OpenVINO on iGPU"]
         IM["Immich + PostgreSQL + Valkey"]
@@ -72,7 +72,7 @@ Network topology (WAN, PPPoE, VLANs, firewall rules): [`docs/network.md`](docs/n
 | Zigbee2MQTT | 1 | Blocked on USB Zigbee dongle — compose entry ready but commented |
 | Uptime Kuma | 1 | Watches Node 2 from outside it |
 | Node Exporter | both | Metrics scraped by VictoriaMetrics on Node 2 |
-| ZFS pool `datapool` | 2 | 3-way mirror, ~930 GB usable — **created fresh on Node 2**, never existed on Node 1 (no export/import needed) |
+| ZFS pool `datapool` | 2 | RAIDZ1, ~2 TB usable — **created fresh on Node 2**, never existed on Node 1 (no export/import needed) |
 | Samba / NFS shares | 2 | `/data`, `/srv/photos`, `/srv/shares` |
 | Frigate (+ bundled go2rtc) | 2 | OpenVINO on iGPU, dedicated ext4 disk — never NFS |
 | Immich + PostgreSQL + Valkey | 2 | ML worker via OpenVINO image tag |

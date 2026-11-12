@@ -71,7 +71,7 @@ Drives:
 |---|---|---|
 | SATA 1 | 256 GB 2.5" SSD (ext4) | OS, Docker, PostgreSQL, Valkey, Frigate SQLite, Immich thumbnails, Omada, Loki, Grafana, VictoriaMetrics |
 | SATA 2 | 1 TB 3.5" HDD (ext4) | Frigate recordings only → `/media/frigate/recordings`. Isolated from ZFS |
-| SATA 3–5 | 3× 1 TB 3.5" HDD | ZFS 3-way mirror, pool `datapool`. Photos, shares, media, torrents. ~930 GB usable |
+| SATA 3–5 | 3× 1 TB 3.5" HDD | ZFS RAIDZ1, pool `datapool`. Photos, shares, media, torrents. ~2 TB usable |
 | USB | External HDD (1 TB+) | Backup target for photos and shares |
 
 Services on Node 2:
@@ -104,7 +104,7 @@ When Node 2 is off: DNS, Wi-Fi, routing, DHCP, remote access and Home Assistant 
 
 ## 5. ZFS Layout
 
-3-way mirror across three 1 TB drives (survives two disk failures, ~930 GB usable). Torrents and media are **folders inside one dataset** so hardlinks work.
+RAIDZ1 across three 1 TB drives (~2 TB usable) — survives one disk failure; snapshots + off-node backup cover deletion/corruption (see `node2/README.md`). Torrents and media are **folders inside one dataset** so hardlinks work.
 
 ```bash
 # 1. Cap ARC at 6 GiB (Node 2, 32 GB RAM)
@@ -148,7 +148,7 @@ Snapshots and health: `sudo apt install sanoid` (scheduled snapshots of photos +
 
 ## 6. Backup Plan
 
-The 3-way mirror protects against up to two disk failures — not deletion, ransomware, corruption or theft.
+RAIDZ1 protects against one disk failure — not deletion, ransomware, corruption or theft. Snapshots and the off-node backup cover those cases.
 
 - Minimum: external USB HDD, `datapool/photos` + `datapool/shares` copied weekly (rsync, or syncoid/zfs send if the external disk is ZFS). Unplug or rotate periodically.
 - Better: also push photos to cloud storage with rclone (encrypted).
