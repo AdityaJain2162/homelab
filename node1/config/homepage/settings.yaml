@@ -1,0 +1,21 @@
+---
+# Homepage settings — theme/layout. Service tiles live in services.yaml,
+# bookmarks in bookmarks.yaml (same dir, auto-loaded).
+title: Homelab
+theme: dark
+color: slate
+headerStyle: clean
+statusStyle: dot          # green/grey dot per service (needs docker.sock)
+layout:
+  Infrastructure:
+    style: row
+    columns: 4
+  Automation:
+    style: row
+    columns: 4
+  Monitoring:
+    style: row
+    columns: 4
+  Planned:
+    style: row
+    columns: 4

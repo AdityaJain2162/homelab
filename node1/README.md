@@ -73,6 +73,7 @@ Give Node 1 a **static IP or DHCP reservation** on the router — everything poi
 | cAdvisor | `ghcr.io/google/cadvisor:v0.60.6` | 8080 | Per-container CPU/mem/network metrics |
 | Blackbox Exporter | `prom/blackbox-exporter:v0.29.1` | 9115 | HTTP probes of service UIs → `probe_success` |
 | Grafana | `grafana/grafana:13.2.5` | 3002 | Dashboards + provisioned alert rules over VictoriaMetrics |
+| Homepage | `ghcr.io/gethomepage/homepage:v2.7.0` | 3003 | Service tiles page — config in `config/homepage/` |
 | Zigbee2MQTT | *(commented out)* | 8099 | Enable when the USB dongle arrives |
 | Asterisk PBX | *(planned — commented out)* | 5060 + RTP | SIP intercom + trunk — see [`docs/voice.md`](../docs/voice.md) |
 

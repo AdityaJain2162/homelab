@@ -1,0 +1,72 @@
+---
+# Service tiles. `container:` enables the status dot via the mounted docker
+# socket — value must match container_name in docker-compose.yml.
+# `href` uses .homelab names → AdGuard wildcard → NPM :80 proxy hosts.
+# icon: filenames from homepage's bundled icon set — a wrong name just renders
+# blank, name/href still work. Check gethomepage.dev docs for exact names.
+
+- Infrastructure:
+    - name: AdGuard Home
+      icon: adguardhome.png
+      href: http://adguard.homelab
+      description: DNS + ad blocking
+      container: adguardhome
+    - name: Nginx Proxy Manager
+      icon: nginxproxymanager.png
+      href: http://192.168.1.60:81
+      description: Reverse proxy admin
+      container: npm
+    - name: Homepage
+      icon: homepage.png
+      href: http://home.homelab
+      description: This page
+      container: homepage
+    - name: Tailscale
+      icon: tailscale.png
+      href: https://login.tailscale.com/admin/machines
+      description: Mesh VPN admin
+
+- Automation:
+    - name: Home Assistant
+      icon: homeassistant.png
+      href: http://homeassistant.homelab
+      description: Home automation
+      container: homeassistant
+    # - name: Uptime Kuma        # parked — uncomment when enabled
+    #   icon: uptimekuma.png
+    #   href: http://192.168.1.60:3001
+    #   container: uptime-kuma
+    # - name: Mosquitto MQTT     # parked — needs mosquitto.conf in appdata
+    #   icon: mqtt.png
+    #   href: mqtt://192.168.1.60:1883
+
+- Monitoring:
+    - name: Grafana
+      icon: grafana.png
+      href: http://grafana.homelab
+      description: Dashboards + alerts
+      container: grafana
+    - name: VictoriaMetrics
+      icon: victoriametrics.png
+      href: http://vm.homelab
+      description: Metrics TSDB (3-month retention)
+      container: victoria-metrics
+    - name: Node Exporter
+      icon: prometheus.png
+      href: http://192.168.1.60:9100/metrics
+      description: Host metrics
+      container: node-exporter
+
+- Planned:
+    - name: Immich
+      icon: immich.png
+      href: http://immich.homelab
+      description: Photos — Node 2
+    - name: Frigate
+      icon: frigate.png
+      href: http://frigate.homelab
+      description: CCTV/NVR — Node 2
+    - name: Omada Controller
+      icon: omada.png
+      href: http://omada.homelab
+      description: Network management — Node 2
