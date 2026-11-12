@@ -77,7 +77,7 @@ services:
     environment:
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_USERSPACE=false
-      # - TS_AUTHKEY=tskey-auth-...   # optional headless auth; else: docker compose exec tailscale tailscale up
+      - TS_AUTHKEY=${TS_AUTHKEY:-}  # headless auth — empty = manual `tailscale up` once (state persists after)
     volumes:
       - /opt/docker/appdata/tailscale:/var/lib/tailscale
       - /dev/net/tun:/dev/net/tun
