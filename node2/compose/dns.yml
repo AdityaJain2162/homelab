@@ -11,10 +11,9 @@ services:
     image: adguard/adguardhome:v0.107.80
     container_name: adguardhome
     restart: unless-stopped
-    ports:
-      - "53:53/tcp"    # DNS
-      - "53:53/udp"    # DNS
-      - "${ADGUARD_WEB_PORT:-3001}:3000"   # admin UI — 3000 is Grafana on this node
+    network_mode: host    # binds :53 + web UI directly (same as Node 1)
+    # Web UI port comes from bind_port in the imported AdGuardHome.yaml —
+    # set it to ADGUARD_WEB_PORT (default 3001; :3000 is Grafana on this node).
     volumes:
       - /opt/docker/appdata/adguardhome/work:/opt/adguardhome/work
       - /opt/docker/appdata/adguardhome/conf:/opt/adguardhome/conf

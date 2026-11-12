@@ -1,16 +1,16 @@
-# Grafana Alloy — Node 2. Scrapes metrics → VictoriaMetrics (same compose network)
-# and ships Docker + journald logs → Loki.
+# Grafana Alloy — Node 2. Scrapes metrics → VictoriaMetrics and ships
+# Docker + journald logs → Loki. Everything is host-networked → localhost targets.
 # Runtime vars come from the container environment (see compose/monitoring.yml + .env).
 
 prometheus.remote_write "vm" {
   endpoint {
-    url = "http://victoriametrics:8428/api/v1/write"
+    url = "http://localhost:8428/api/v1/write"
   }
 }
 
-// Node 2's own node-exporter runs host-networked → reach it via host gateway
+// Node 2's own node-exporter (host network)
 prometheus.scrape "node2" {
-  targets = [{ __address__ = "host.docker.internal:9100", job = "node2", instance = "node2" }]
+  targets = [{ __address__ = "localhost:9100", job = "node2", instance = "node2" }]
   forward_to = [prometheus.remote_write.vm.receiver]
   scrape_interval = "30s"
 }
@@ -22,9 +22,9 @@ prometheus.scrape "node1" {
   scrape_interval = "30s"
 }
 
-// cAdvisor container metrics (container port, not the published 8085)
+// cAdvisor container metrics — host port 8085 (:8080 is qBittorrent on Node 2)
 prometheus.scrape "cadvisor" {
-  targets = [{ __address__ = "cadvisor:8080", job = "cadvisor", instance = "node2" }]
+  targets = [{ __address__ = "localhost:8085", job = "cadvisor", instance = "node2" }]
   forward_to = [prometheus.remote_write.vm.receiver]
   scrape_interval = "30s"
 }
@@ -33,7 +33,7 @@ prometheus.scrape "cadvisor" {
 
 loki.write "loki" {
   endpoint {
-    url = "http://loki:3100/loki/api/v1/push"
+    url = "http://localhost:3100/loki/api/v1/push"
   }
 }
 

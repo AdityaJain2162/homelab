@@ -88,6 +88,8 @@ Then `sudo apt install sanoid` for scheduled snapshots — hourly for `photos` (
 
 All drafts in [`compose/`](compose/). Run from `node2/` with `docker compose --env-file .env -f compose/<file>.yml up -d`.
 
+**Networking:** the infra stack (`dns`, `monitoring`) uses `network_mode: host` like Node 1 — ports bind directly, env-driven via `.env`. App stacks (`frigate`, `immich`, `media`, `omada`) stay on bridge networking — port remapping and isolation matter more there.
+
 | File | Services | Notes |
 |---|---|---|
 | `compose/dns.yml` | AdGuard Home (secondary DNS) | Same image as Node 1 — import Node 1's `AdGuardHome.yaml` for identical upstream/rewrites/blocklists |
