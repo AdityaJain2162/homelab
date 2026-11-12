@@ -91,14 +91,18 @@ for entry in RAW_HOSTS:
     else:
         body = {
             **want,
+            "access_list_id": 0,
             "certificate_id": 0,
-            "ssl_forced": False,
+            "meta": {"letsencrypt_agree": False, "dns_challenge": False},
+            "advanced_config": "",
+            "locations": [],
+            "block_exploits": True,
+            "caching_enabled": False,
+            "allow_websocket_upgrade": True,
             "http2_support": True,
             "hsts_enabled": False,
             "hsts_subdomains": False,
-            "hsts_max_age": 0,
-            "block_exploits": True,
-            "advanced_config": "",
+            "ssl_forced": False,
         }
         req("POST", "/nginx/proxy-hosts", body, token=TOKEN)
         print(f"created  {domain} → http://{fhost}:{fport}")
