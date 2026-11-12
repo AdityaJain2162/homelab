@@ -39,7 +39,7 @@
         icon: tailscale.png
         href: https://login.tailscale.com/admin/machines
         description: Mesh VPN admin console
-        # container: tailscale    # uncomment once enabled in compose
+        container: tailscale
 
 - Smart Home:
     - Home Assistant:

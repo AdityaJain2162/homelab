@@ -78,7 +78,7 @@ Give Node 1 a **static IP or DHCP reservation** on the router — everything poi
 
 **Bridge networking + published ports** — each container gets its own port namespace; `.env` vars (`NODE_EXPORTER_PORT`, `VICTORIAMETRICS_PORT`, `CADVISOR_PORT`, `BLACKBOX_PORT`, `GRAFANA_PORT`) set the *host* side of the mapping while internal ports stay at app defaults. **Exceptions on host networking:** AdGuard (`:53` DNS latency — no NAT per packet), Tailscale and Asterisk when enabled (they genuinely need host netns). Keep `config/vm/scrape.yml` service names in sync if services are renamed.
 
-**Currently commented out in `docker-compose.yml`:** `mosquitto` (needs `config/mosquitto/mosquitto.conf` copied into appdata first), `tailscale` (was restart-looping), `zigbee2mqtt`, `asterisk`.
+**Currently commented out in `docker-compose.yml`:** `mosquitto` (needs `config/mosquitto/mosquitto.conf` copied into appdata first), `zigbee2mqtt`, `asterisk`.
 
 Host-level (installed by the Ansible `hardware_monitor` role, not compose): **smartmontools/smartd** watches all drives — short self-test Sun 02:00, long monthly — and alerts via `scripts/hw-alert.sh` to Telegram/Discord (targets in `/etc/homelab-alert.env`). **node-exporter** exposes host metrics for Grafana history/alerting on Node 2 (its `smartmon` collector was removed upstream in v1.9).
 
